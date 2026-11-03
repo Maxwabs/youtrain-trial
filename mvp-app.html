@@ -1,0 +1,2005 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="YouTrain">
+<meta name="theme-color" content="#083243">
+<link rel="manifest" href="yt.webmanifest">
+<link rel="apple-touch-icon" href="yt-icon-180.png">
+<title>YouTrain MVP</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { background:#083243; }
+  body { font-family:-apple-system,'SF Pro Text',-apple-system,sans-serif; padding:20px 22px 30px; }
+
+  .pagecap { font-size:12px; color:#A6ACB3; letter-spacing:.12em; text-transform:uppercase; font-weight:700; padding:2px 2px 16px; }
+  .cell { margin-bottom:34px; max-width:430px; }
+  .cap { margin-bottom:8px; }
+  .cap .n { display:inline-flex; width:22px; height:22px; border-radius:50%; background:#0FD2B1; color:#fff; font-weight:800; font-size:12px; align-items:center; justify-content:center; margin-right:8px; }
+  .cap .name { font-size:14.5px; font-weight:800; color:#F1F3F5; }
+  .note { font-size:12.5px; line-height:1.45; color:#A6ACB3; margin:4px 0 14px; max-width:400px; }
+
+  /* ---------------- phone frame ---------------- */
+  .phone { width:392px; height:848px; background:#17151A; border-radius:56px; padding:10px;
+           box-shadow:0 24px 48px rgba(35,32,29,.14); position:relative; }
+  .screen { position:relative; height:100%; border-radius:46px; overflow:hidden; background:#083243; isolation:isolate; }
+  .island { position:absolute; top:11px; left:50%; transform:translateX(-50%); width:116px; height:32px;
+            border-radius:18px; background:#101012; z-index:60; }
+  .statusbar { position:absolute; top:16px; left:0; right:0; display:flex; justify-content:space-between;
+               padding:0 30px; font-size:13.5px; font-weight:700; color:#F1F3F5; z-index:55; }
+
+  /* ---------------- stage (both states) ---------------- */
+  .stage { position:absolute; top:0; left:0; right:0; }
+  .floor { position:absolute; left:50%; transform:translateX(-50%); border-radius:50%;
+           background:radial-gradient(ellipse at center, rgba(127,233,207,.12), rgba(127,233,207,0) 70%); }
+  .appbar { position:absolute; top:58px; left:0; right:0; display:flex; justify-content:space-between;
+            align-items:center; padding:0 20px; z-index:40; }
+  .p-mark { font-size:16px; font-weight:800; color:#F1F3F5; }
+  .p-mark .lg { letter-spacing:-.01em; }
+  .p-phase { font-size:11px; font-weight:700; color:#7FE9CF; background:#DCF7F0; padding:5px 11px; border-radius:20px; }
+  .event-pill { position:absolute; top:96px; left:50%; transform:translateX(-50%); z-index:40;
+                font-size:10.5px; font-weight:600; color:#A6ACB3; background:rgba(255,255,255,.86);
+                border:1px solid rgba(255,255,255,.10); padding:5px 12px; border-radius:16px; white-space:nowrap; }
+  .event-pill b { color:#F1F3F5; font-weight:700; }
+
+  .avatar-wrap { position:absolute; left:50%; transform:translateX(-50%); z-index:30;
+                 perspective:600px; }
+  .avatar-inner { position:relative; transform-style:preserve-3d; cursor:grab; touch-action:none; }
+  .avatar-inner.grab { cursor:grabbing; }
+  .bounce { animation:bob 3.4s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-13px); } }
+  @media (prefers-reduced-motion: reduce) { .bounce { animation:none; } }
+  .echo { position:absolute; left:0; top:0; opacity:.10; transform:translateY(13px); }
+  .echo.e2 { opacity:.055; transform:translateY(-12px); }
+  .stage-fig svg { display:block; }
+
+  .floor-shadow { position:absolute; left:50%; transform:translateX(-50%); border-radius:50%; z-index:24;
+                  background:radial-gradient(ellipse at center, rgba(35,32,29,.17), rgba(35,32,29,0) 68%); }
+
+  .trainer-line { position:absolute; left:0; right:0; text-align:center; z-index:38; color:#F1F3F5; }
+  .trainer-line .gl { color:#7FE9CF; }
+  .trainer-line p { font-size:13.5px; font-weight:700; }
+  .trainer-line small { display:block; font-size:10.5px; font-weight:600; color:#A6ACB3; margin-top:3px; }
+
+  .worn-chip { position:absolute; z-index:42; font-size:10px; font-weight:700; color:#7FE9CF;
+               background:#0F3B4F; border:1px solid #B4EDE0; padding:5px 10px; border-radius:14px;
+               box-shadow:0 3px 10px rgba(127,233,207,.10); }
+  .wardrobe { position:absolute; left:18px; right:18px; display:flex; justify-content:space-between; align-items:center; z-index:45; }
+  .w-btn { display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700; color:#F1F3F5;
+           background:rgba(255,255,255,.92); border:1px solid rgba(255,255,255,.10); padding:9px 14px; border-radius:22px;
+           box-shadow:0 4px 14px rgba(35,32,29,.07); }
+  .w-btn .wico { color:#7FE9CF; }
+  .ab-chip { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#7FE9CF;
+             background:#DCF7F0; padding:8px 12px; border-radius:18px; }
+
+  /* ---------------- timeline scrub ---------------- */
+  .scrub { position:absolute; left:26px; right:26px; z-index:44; }
+  .rail { position:relative; height:34px; }
+  .rail .seg { position:absolute; top:16px; height:2.5px; border-radius:2px; }
+  .seg.then-now { left:14%; width:36%; background:#545A61; }
+  .seg.now-dream { left:50%; width:36%; background:#B4EDE0; }
+  .node { position:absolute; top:0; width:64px; margin-left:-32px; text-align:center; }
+  .node .dot { display:block; width:15px; height:15px; border-radius:50%; margin:10px auto 0; }
+  .node.t0 { left:14%; } .node.t1 { left:50%; } .node.t2 { left:86%; }
+  .node .nm { font-size:9.5px; font-weight:700; color:#A6ACB3; letter-spacing:.08em; text-transform:uppercase; }
+  .node .wt { display:block; font-size:13.5px; font-weight:800; color:#F1F3F5; font-variant-numeric:tabular-nums; margin-bottom:1px; }
+  .node.on .dot { background:#0FD2B1; border:2.5px solid #fff; box-shadow:0 0 0 2px #0FD2B1, 0 3px 8px rgba(15,210,177,.35); }
+  .node .dot.off { background:#fff; border:2px solid #545A61; }
+  .node.t2 .dot.off { border-color:#B4EDE0; }
+  .node.on .wt, .node:hover .wt { color:#7FE9CF; }
+
+  /* ---------------- bottom sheet ---------------- */
+  .tabs { position:absolute; left:0; right:0; bottom:0; height:64px; background:rgba(255,255,255,.93);
+          border-top:1px solid rgba(255,255,255,.10); display:flex; z-index:70; }
+  .tab { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+         font-size:9.5px; font-weight:700; color:#8F959C; }
+  .tab.on { color:#7FE9CF; }
+  .tab svg { display:block; }
+
+  .sheet { position:absolute; left:10px; right:10px; bottom:66px; z-index:65; background:#0F3B4F;
+           border-radius:26px 26px 0 0; box-shadow:0 -10px 30px rgba(35,32,29,.10); }
+  .handle { width:44px; height:4.5px; border-radius:3px; background:#545A61; margin:9px auto 0; }
+  .sheet.down { height:126px; }
+  .sheet.down .sh-row { display:flex; justify-content:space-between; align-items:center; padding:14px 18px 0; }
+  .sheet.down .sh-t { font-size:13px; font-weight:700; color:#F1F3F5; }
+  .sheet.down .sh-s { font-size:11px; font-weight:600; color:#A6ACB3; margin-top:3px; }
+  .deckdots { display:flex; gap:5px; }
+  .deckdots i { width:6px; height:6px; border-radius:50%; background:#4A5057; }
+  .deckdots i.on { background:#0FD2B1; }
+  .sheet.down .deckdots { margin-right:2px; }
+
+  .sheet.up { top:48%; height:calc(52% - 66px); display:flex; flex-direction:column; }
+  .sh-head { display:flex; justify-content:space-between; align-items:center; padding:12px 18px 2px; }
+  .sh-head b { font-size:14px; color:#F1F3F5; font-weight:800; }
+  .sh-head span { font-size:10.5px; font-weight:700; color:#7FE9CF; }
+  .deck { display:flex; gap:11px; overflow-x:auto; padding:12px 14px 6px; scroll-snap-type:x mandatory; }
+  .deck::-webkit-scrollbar { display:none; }
+  .tcard { flex:none; width:246px; scroll-snap-align:start; background:#0F3B4F; border:1px solid rgba(255,255,255,.09);
+           border-radius:18px; padding:13px 14px; }
+  .tcard h4 { font-size:10px; letter-spacing:.09em; text-transform:uppercase; color:#A6ACB3; font-weight:700; }
+  .bignum { font-size:30px; font-weight:800; color:#F1F3F5; font-variant-numeric:tabular-nums; letter-spacing:-.01em; margin-top:4px; }
+  .bignum small { font-size:12px; font-weight:700; color:#A6ACB3; }
+  .delta { font-size:11.5px; font-weight:700; color:#7FE9CF; margin-left:6px; }
+  .micro { font-size:10.5px; color:#A6ACB3; line-height:1.4; margin-top:5px; }
+  .lrow { display:flex; align-items:center; gap:8px; padding:6.5px 0; font-size:12.5px; color:#F1F3F5; font-weight:600; }
+  .lrow + .lrow { border-top:1px solid rgba(255,255,255,.09); }
+  .lrow i { width:8px; height:8px; border-radius:50%; flex:none; }
+  .lrow .amt { margin-left:auto; font-size:11px; font-weight:700; color:#A6ACB3; }
+  .lrow .amt.warn { color:#AD6500; }
+  .plan-door { border:1.5px dashed #0FD2B1; background:#0D3A4C; padding:12px 13px; }
+  .plan-door .pd-in { display:flex; gap:10px; align-items:flex-start; }
+  .plan-door .pd-g { color:#0FD2B1; font-size:15px; line-height:1; margin-top:2px; }
+  .plan-door b { display:block; font-size:14px; color:#F1F3F5; font-weight:800; }
+  .plan-door span { display:block; font-size:10.5px; color:#A6ACB3; font-weight:600; margin-top:3px; line-height:1.35; }
+  .action-card { background:#0FD2B1; border:none; color:#0B2B26; display:flex; flex-direction:column; justify-content:center; gap:5px; }
+  .action-card b { font-size:15.5px; font-weight:800; }
+  .action-card span { font-size:11px; font-weight:600; color:#0B2B26; }
+  .sheet .footdots { display:flex; gap:5px; justify-content:flex-start; padding:10px 20px 12px; }
+  .sheet .footdots i { width:6px; height:6px; border-radius:50%; background:#4A5057; }
+  .sheet .footdots i.on { background:#0FD2B1; }
+
+  /* sheet-open compact scrub = the switch row */
+  .switch-row { position:absolute; left:0; right:0; display:flex; justify-content:center; gap:8px; z-index:44; }
+  .sw { font-size:10.5px; font-weight:700; color:#A6ACB3; background:rgba(255,255,255,.9); border:1px solid rgba(255,255,255,.10);
+        padding:5px 11px; border-radius:14px; }
+  .sw.on { color:#7FE9CF; border-color:#B4EDE0; background:#DCF7F0; }
+
+  /* ---------------- it talks: speech bubble + sass dial ---------------- */
+  .bubble { position:absolute; left:22px; right:22px; z-index:50; background:#0F3B4F;
+            border-radius:18px 18px 18px 6px; padding:13px 16px 11px;
+            box-shadow:0 8px 24px rgba(35,32,29,.10); border:1px solid rgba(255,255,255,.09); }
+  .bubble:after { content:''; position:absolute; top:-9px; left:44px; width:16px; height:16px;
+                  background:#fff; transform:rotate(45deg); border-left:1px solid rgba(255,255,255,.09); border-top:1px solid rgba(255,255,255,.09); }
+  .bubble .b-tail-note { font-size:9.5px; font-weight:700; color:#8F959C; letter-spacing:.06em;
+                         margin-bottom:4px; }
+  .bubble p { font-size:14px; font-weight:600; line-height:1.42; color:#F1F3F5; }
+  .bubble p .spice { color:#7FE9CF; }
+  .bubble time { display:block; font-size:10px; font-weight:600; color:#A6ACB3; margin-top:5px; }
+  .sass-chip { position:absolute; z-index:52; display:inline-flex; align-items:center; gap:7px;
+               font-size:12px; font-weight:800; color:#0B2B26; background:#0FD2B1; padding:9px 14px;
+               border-radius:20px; box-shadow:0 4px 14px rgba(15,210,177,.35); }
+  .sass-chip .bar { letter-spacing:1px; font-size:11px; }
+
+  /* sass ramp strip below the phones */
+  .rampwrap { max-width:980px; margin-top:6px; }
+  .ramp { display:grid; grid-template-columns:150px repeat(3, 1fr); gap:10px; }
+  .ramp h5 { grid-column:span 4; font-size:12.5px; font-weight:800; color:#F1F3F5; padding:10px 2px 2px; }
+  .ramp .rlab { font-size:10.5px; font-weight:700; color:#A6ACB3; text-transform:uppercase; letter-spacing:.08em; align-self:center; }
+  .rcell { background:#fff; border:1px solid rgba(255,255,255,.10); border-radius:12px; padding:10px 12px;
+            font-size:12.5px; line-height:1.45; color:#F1F3F5; font-weight:500; }
+  .rcell b { color:#7FE9CF; }
+  .rcell.hd { background:transparent; border:none; padding:10px 12px 4px; font-size:10px; color:#A6ACB3; }
+  .rcell.spice { border-color:#B4EDE0; background:#0D3A4C; }
+  .avatar-photo { width:100%; height:100%; object-fit:contain; object-position:bottom center; display:block;
+                   filter:saturate(.94) contrast(1.01); mix-blend-mode:multiply; }
+  .stage .bounce { -webkit-user-drag:none; }
+  .avatar-inner { transition:none; }
+  .avatar-inner img { pointer-events:none; }
+
+  .pair { position:absolute; left:16px; right:16px; top:338px; z-index:46; background:#0F3B4F;
+          border-radius:20px; border:1px solid rgba(255,255,255,.09); box-shadow:0 10px 26px rgba(35,32,29,.10);
+          padding:13px 15px 11px; }
+  .pr { display:flex; gap:10px; align-items:center; }
+  .pfig { position:relative; flex:1; text-align:center; }
+  .pfig img { width:100%; height:150px; object-fit:contain; object-position:bottom center; display:block; filter:saturate(.94); }
+  .pfig .pnm { position:absolute; left:6px; top:4px; font-size:10px; font-weight:800; letter-spacing:.1em; color:#A6ACB3; text-transform:uppercase; }
+  .vs { font-size:12px; font-weight:800; color:#7FE9CF; flex:none; }
+  .pl { display:flex; justify-content:space-around; gap:8px; margin-top:8px; }
+  .pl b { font-size:12.5px; color:#F1F3F5; font-weight:800; }
+  .pl s { font-size:10.5px; font-weight:700; color:#A6ACB3; text-decoration:none; }
+
+  .abwrap { position:absolute; left:18px; right:18px; top:332px; bottom:74px; z-index:46;
+            display:flex; flex-direction:column; background:#0F3B4F; border-radius:22px;
+            border:1px solid rgba(255,255,255,.09); box-shadow:0 12px 30px rgba(35,32,29,.10); }
+  .abhead { display:flex; justify-content:space-between; align-items:center; padding:14px 18px 4px; }
+  .abhead b { font-size:14.5px; color:#F1F3F5; font-weight:800; }
+  .abhead span { font-size:10.5px; font-weight:700; color:#7FE9CF; }
+  .abdeck { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:10px 16px 12px; flex:1; }
+  .abpane { position:relative; border-radius:16px; overflow:hidden;
+            background:linear-gradient(180deg,#0F3B4F, #0D3A4C); border:1px solid rgba(255,255,255,.09); }
+  .abfig { position:absolute; left:0; right:0; top:44px; bottom:60px; }
+  .abfig img { width:100%; height:100%; object-fit:contain; object-position:center bottom; filter:saturate(.95); }
+  .abpane.dream .abfig img { object-position:center 20%; }
+  .abpane::after { content:''; position:absolute; left:0; right:0; bottom:0; height:52px; pointer-events:none;
+                   background:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.92) 62%); }
+  .abtag { position:absolute; left:10px; bottom:30px; font-size:10px; font-weight:800; color:#A6ACB3; letter-spacing:.09em; z-index:2; }
+  .abnum { position:absolute; left:10px; bottom:12px; font-size:17px; font-weight:800; color:#F1F3F5; z-index:2; font-variant-numeric:tabular-nums; }
+  .abdelta { position:absolute; right:10px; bottom:12px; font-size:11px; font-weight:800; color:#7FE9CF; z-index:2; }
+  .abfoot { display:flex; justify-content:space-around; align-items:center; padding:12px 10px 14px; border-top:1px solid rgba(255,255,255,.08); }
+  .abfoot b { font-size:12px; color:#F1F3F5; font-weight:700; }
+  .abfoot .dim { color:#A6ACB3; font-weight:600; }
+
+  /* --- dark-mode v2: ink follows what's behind each element (state-aware) --- */
+  .event-pill, .event-pill b { color:#23201D !important; }
+  .w-btn { color:#23201D !important; }
+  .sw { color:#6E7178 !important; }
+  .sw.on { color:#23201D !important; }
+  .ab-chip { color:#163300 !important; }
+  .cell:first-of-type .trainer-line p { color:#23201D !important; }
+  .cell:first-of-type .trainer-line small { color:#6E7178 !important; }
+  .node .nm { color:#A6ACB3 !important; }
+  .node .wt { color:#F1F3F5 !important; }
+  .node.on .wt { color:#0FD2B1 !important; }
+  .abnum, .abfoot b { color:#23201D !important; }
+  .abtag { color:#6E7178 !important; }
+  .abpane.dream .abtag { color:#076A55 !important; }
+  .abdelta { color:#076A55 !important; }
+  .tab { color:#8F959C !important; }
+  .tab.on { color:#0FD2B1 !important; }
+  .lrow { color:#F1F3F5 !important; }
+  .lrow .amt { color:#A6ACB3 !important; }
+  .lrow .amt.warn { color:#FFC46B !important; }
+  .micro { color:#A6ACB3 !important; }
+  .tcard h4 { color:#A6ACB3 !important; }
+  .bignum { color:#F1F3F5 !important; }
+  .bubble p { color:#F1F3F5 !important; }
+  .duo-tag[style*="right"] { color:#7FE9CF !important; }
+  .duo-tag[style*="right"] b { color:#7FE9CF !important; }
+
+  .bubble:after { background:#0F3B4F !important; border-color:rgba(255,255,255,.09) !important; }
+
+  /* compact-avatar spill fix: phone-2 photo stays inside its 118x122 box (no baked-floor spill under the trainer line) */
+  .avatar-wrap[style*="118px"] .avatar-photo { height:122px !important; object-fit:contain !important; object-position:bottom center !important; }
+  .pfig .pnm, .pfig .pnm[style] { color:#6E7178 !important; text-shadow:0 1px 2px rgba(255,255,255,.75); }
+  .duo-tag { text-shadow:0 1px 2px rgba(255,255,255,.75); }
+</style>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { background:#083243; }
+  body { font-family:-apple-system,'SF Pro Text',-apple-system,sans-serif; padding:20px 22px 30px; }
+
+  .scr-dream .pagecap{ font-size:12px; color:#A6ACB3; letter-spacing:.12em; text-transform:uppercase; font-weight:700; padding:2px 2px 16px; }
+  .scr-dream .cell{ margin-bottom:34px; max-width:430px; }
+  .scr-dream .cap{ margin-bottom:8px; }
+  .scr-dream .cap .n{ display:inline-flex; width:22px; height:22px; border-radius:50%; background:#0FD2B1; color:#fff; font-weight:800; font-size:12px; align-items:center; justify-content:center; margin-right:8px; }
+  .scr-dream .cap .name{ font-size:14.5px; font-weight:800; color:#F1F3F5; }
+  .scr-dream .note{ font-size:12.5px; line-height:1.45; color:#A6ACB3; margin:4px 0 14px; max-width:400px; }
+
+  .scr-dream /* ---------------- phone frame ---------------- */
+  .phone{ width:392px; height:848px; background:#17151A; border-radius:56px; padding:10px;
+           box-shadow:0 24px 48px rgba(35,32,29,.14); position:relative; }
+  .scr-dream .screen{ position:relative; height:100%; border-radius:46px; overflow:hidden; background:#083243; isolation:isolate; }
+  .scr-dream .island{ position:absolute; top:11px; left:50%; transform:translateX(-50%); width:116px; height:32px;
+            border-radius:18px; background:#101012; z-index:60; }
+  .scr-dream .statusbar{ position:absolute; top:16px; left:0; right:0; display:flex; justify-content:space-between;
+               padding:0 30px; font-size:13.5px; font-weight:700; color:#F1F3F5; z-index:55; }
+
+  .scr-dream /* ---------------- stage (both states) ---------------- */
+  .stage{ position:absolute; top:0; left:0; right:0; }
+  .scr-dream .floor{ position:absolute; left:50%; transform:translateX(-50%); border-radius:50%;
+           background:radial-gradient(ellipse at center, rgba(127,233,207,.12), rgba(127,233,207,0) 70%); }
+  .scr-dream .appbar{ position:absolute; top:58px; left:0; right:0; display:flex; justify-content:space-between;
+            align-items:center; padding:0 20px; z-index:40; }
+  .scr-dream .p-mark{ font-size:16px; font-weight:800; color:#F1F3F5; }
+  .scr-dream .p-mark .lg{ letter-spacing:-.01em; }
+  .scr-dream .p-phase{ font-size:11px; font-weight:700; color:#7FE9CF; background:#DCF7F0; padding:5px 11px; border-radius:20px; }
+  .scr-dream .event-pill{ position:absolute; top:96px; left:50%; transform:translateX(-50%); z-index:40;
+                font-size:10.5px; font-weight:600; color:#A6ACB3; background:rgba(255,255,255,.86);
+                border:1px solid rgba(255,255,255,.10); padding:5px 12px; border-radius:16px; white-space:nowrap; }
+  .scr-dream .event-pill b{ color:#F1F3F5; font-weight:700; }
+
+  .scr-dream .avatar-wrap{ position:absolute; left:50%; transform:translateX(-50%); z-index:30;
+                 perspective:600px; }
+  .scr-dream .avatar-inner{ position:relative; transform-style:preserve-3d; cursor:grab; touch-action:none; }
+  .scr-dream .avatar-inner.grab{ cursor:grabbing; }
+  .scr-dream .bounce{ animation:bob 3.4s ease-in-out infinite; }
+  @keyframes bob { .scr-dream 0%, .scr-dream 100%{ transform:translateY(0); } .scr-dream 50%{ transform:translateY(-13px); } }
+  @media (prefers-reduced-motion: reduce) { .scr-dream .bounce{ animation:none; } }
+  .scr-dream .echo{ position:absolute; left:0; top:0; opacity:.10; transform:translateY(13px); }
+  .scr-dream .echo.e2{ opacity:.055; transform:translateY(-12px); }
+  .scr-dream .stage-fig svg{ display:block; }
+
+  .scr-dream .floor-shadow{ position:absolute; left:50%; transform:translateX(-50%); border-radius:50%; z-index:24;
+                  background:radial-gradient(ellipse at center, rgba(35,32,29,.17), rgba(35,32,29,0) 68%); }
+
+  .scr-dream .trainer-line{ position:absolute; left:0; right:0; text-align:center; z-index:38; color:#F1F3F5; }
+  .scr-dream .trainer-line .gl{ color:#7FE9CF; }
+  .scr-dream .trainer-line p{ font-size:13.5px; font-weight:700; }
+  .scr-dream .trainer-line small{ display:block; font-size:10.5px; font-weight:600; color:#A6ACB3; margin-top:3px; }
+
+  .scr-dream .worn-chip{ position:absolute; z-index:42; font-size:10px; font-weight:700; color:#7FE9CF;
+               background:#0F3B4F; border:1px solid #B4EDE0; padding:5px 10px; border-radius:14px;
+               box-shadow:0 3px 10px rgba(127,233,207,.10); }
+  .scr-dream .wardrobe{ position:absolute; left:18px; right:18px; display:flex; justify-content:space-between; align-items:center; z-index:45; }
+  .scr-dream .w-btn{ display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:700; color:#F1F3F5;
+           background:rgba(255,255,255,.92); border:1px solid rgba(255,255,255,.10); padding:9px 14px; border-radius:22px;
+           box-shadow:0 4px 14px rgba(35,32,29,.07); }
+  .scr-dream .w-btn .wico{ color:#7FE9CF; }
+  .scr-dream .ab-chip{ display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#7FE9CF;
+             background:#DCF7F0; padding:8px 12px; border-radius:18px; }
+
+  .scr-dream /* ---------------- timeline scrub ---------------- */
+  .scrub{ position:absolute; left:26px; right:26px; z-index:44; }
+  .scr-dream .rail{ position:relative; height:44px; }
+  .scr-dream .rail .seg{ top:34px; }
+  .scr-dream .node .dot{ margin-top:12px; }
+  .scr-dream .rail .seg{ position:absolute; top:16px; height:2.5px; border-radius:2px; }
+  .scr-dream .seg.then-now{ left:14%; width:36%; background:#545A61; }
+  .scr-dream .seg.now-dream{ left:50%; width:36%; background:#B4EDE0; }
+  .scr-dream .node{ position:absolute; top:0; width:64px; margin-left:-32px; text-align:center; }
+  .scr-dream .node .dot{ display:block; width:15px; height:15px; border-radius:50%; margin:10px auto 0; }
+  .scr-dream .node.t0{ left:14%; } .scr-dream .node.t1{ left:50%; } .scr-dream .node.t2{ left:86%; }
+  .scr-dream .node .nm{ font-size:9.5px; font-weight:700; color:#A6ACB3; letter-spacing:.08em; text-transform:uppercase; }
+  .scr-dream .node .wt{ display:block; font-size:13.5px; font-weight:800; color:#F1F3F5; font-variant-numeric:tabular-nums; margin-bottom:1px; }
+  .scr-dream .node.on .dot{ background:#0FD2B1; border:2.5px solid #fff; box-shadow:0 0 0 2px #0FD2B1, 0 3px 8px rgba(15,210,177,.35); }
+  .scr-dream .node .dot.off{ background:#fff; border:2px solid #545A61; }
+  .scr-dream .node.t2 .dot.off{ border-color:#B4EDE0; }
+  .scr-dream .node.on .wt, .scr-dream .node:hover .wt{ color:#7FE9CF; }
+
+  .scr-dream /* ---------------- bottom sheet ---------------- */
+  .tabs{ position:absolute; left:0; right:0; bottom:0; height:64px; background:rgba(255,255,255,.93);
+          border-top:1px solid rgba(255,255,255,.10); display:flex; z-index:70; }
+  .scr-dream .tab{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+         font-size:9.5px; font-weight:700; color:#8F959C; }
+  .scr-dream .tab.on{ color:#7FE9CF; }
+  .scr-dream .tab svg{ display:block; }
+
+  .scr-dream .sheet{ position:absolute; left:10px; right:10px; bottom:66px; z-index:65; background:#0F3B4F;
+           border-radius:26px 26px 0 0; box-shadow:0 -10px 30px rgba(35,32,29,.10); }
+  .scr-dream .handle{ width:44px; height:4.5px; border-radius:3px; background:#545A61; margin:9px auto 0; }
+  .scr-dream .sheet.down{ height:126px; }
+  .scr-dream .sheet.down .sh-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 18px 0; }
+  .scr-dream .sheet.down .sh-t{ font-size:13px; font-weight:700; color:#F1F3F5; }
+  .scr-dream .sheet.down .sh-s{ font-size:11px; font-weight:600; color:#A6ACB3; margin-top:3px; }
+  .scr-dream .deckdots{ display:flex; gap:5px; }
+  .scr-dream .deckdots i{ width:6px; height:6px; border-radius:50%; background:#4A5057; }
+  .scr-dream .deckdots i.on{ background:#0FD2B1; }
+  .scr-dream .sheet.down .deckdots{ margin-right:2px; }
+
+  .scr-dream .sheet.up{ top:48%; height:calc(52% - 66px); display:flex; flex-direction:column; }
+  .scr-dream .sh-head{ display:flex; justify-content:space-between; align-items:center; padding:12px 18px 2px; }
+  .scr-dream .sh-head b{ font-size:14px; color:#F1F3F5; font-weight:800; }
+  .scr-dream .sh-head span{ font-size:10.5px; font-weight:700; color:#7FE9CF; }
+  .scr-dream .deck{ display:flex; gap:11px; overflow-x:auto; padding:12px 14px 6px; scroll-snap-type:x mandatory; }
+  .scr-dream .deck::-webkit-scrollbar{ display:none; }
+  .scr-dream .tcard{ flex:none; width:246px; scroll-snap-align:start; background:#0F3B4F; border:1px solid rgba(255,255,255,.09);
+           border-radius:18px; padding:13px 14px; }
+  .scr-dream .tcard h4{ font-size:10px; letter-spacing:.09em; text-transform:uppercase; color:#A6ACB3; font-weight:700; }
+  .scr-dream .bignum{ font-size:30px; font-weight:800; color:#F1F3F5; font-variant-numeric:tabular-nums; letter-spacing:-.01em; margin-top:4px; }
+  .scr-dream .bignum small{ font-size:12px; font-weight:700; color:#A6ACB3; }
+  .scr-dream .delta{ font-size:11.5px; font-weight:700; color:#7FE9CF; margin-left:6px; }
+  .scr-dream .micro{ font-size:10.5px; color:#A6ACB3; line-height:1.4; margin-top:5px; }
+  .scr-dream .lrow{ display:flex; align-items:center; gap:8px; padding:6.5px 0; font-size:12.5px; color:#F1F3F5; font-weight:600; }
+  .scr-dream .lrow + .lrow{ border-top:1px solid rgba(255,255,255,.09); }
+  .scr-dream .lrow i{ width:8px; height:8px; border-radius:50%; flex:none; }
+  .scr-dream .lrow .amt{ margin-left:auto; font-size:11px; font-weight:700; color:#A6ACB3; }
+  .scr-dream .lrow .amt.warn{ color:#AD6500; }
+  .scr-dream .plan-door{ border:1.5px dashed #0FD2B1; background:#0F3B4F; padding:12px 13px; }
+  .scr-dream .plan-door .pd-in{ display:flex; gap:10px; align-items:flex-start; }
+  .scr-dream .plan-door .pd-g{ color:#0FD2B1; font-size:15px; line-height:1; margin-top:2px; }
+  .scr-dream .plan-door b{ display:block; font-size:14px; color:#F1F3F5; font-weight:800; }
+  .scr-dream .plan-door span{ display:block; font-size:10.5px; color:#A6ACB3; font-weight:600; margin-top:3px; line-height:1.35; }
+  .scr-dream .action-card{ background:#0FD2B1; border:none; color:#0B2B26; display:flex; flex-direction:column; justify-content:center; gap:5px; }
+  .scr-dream .action-card b{ font-size:15.5px; font-weight:800; }
+  .scr-dream .action-card span{ font-size:11px; font-weight:600; color:#0B2B26; }
+  .scr-dream .sheet .footdots{ display:flex; gap:5px; justify-content:flex-start; padding:10px 20px 12px; }
+  .scr-dream .sheet .footdots i{ width:6px; height:6px; border-radius:50%; background:#4A5057; }
+  .scr-dream .sheet .footdots i.on{ background:#0FD2B1; }
+
+  .scr-dream /* sheet-open compact scrub = the switch row */
+  .switch-row{ position:absolute; left:0; right:0; display:flex; justify-content:center; gap:8px; z-index:44; }
+  .scr-dream .sw{ font-size:10.5px; font-weight:700; color:#A6ACB3; background:rgba(255,255,255,.9); border:1px solid rgba(255,255,255,.10);
+        padding:5px 11px; border-radius:14px; }
+  .scr-dream .sw.on{ color:#7FE9CF; border-color:#B4EDE0; background:#DCF7F0; }
+
+  .scr-dream /* ---------------- it talks: speech bubble + sass dial ---------------- */
+  .bubble{ position:absolute; left:22px; right:22px; z-index:50; background:#0F3B4F;
+            border-radius:18px 18px 18px 6px; padding:13px 16px 11px;
+            box-shadow:0 8px 24px rgba(35,32,29,.10); border:1px solid rgba(255,255,255,.09); }
+  .scr-dream .bubble:after{ content:''; position:absolute; top:-9px; left:44px; width:16px; height:16px;
+                  background:#fff; transform:rotate(45deg); border-left:1px solid rgba(255,255,255,.09); border-top:1px solid rgba(255,255,255,.09); }
+  .scr-dream .bubble .b-tail-note{ font-size:9.5px; font-weight:700; color:#8F959C; letter-spacing:.06em;
+                         margin-bottom:4px; }
+  .scr-dream .bubble p{ font-size:14px; font-weight:600; line-height:1.42; color:#F1F3F5; }
+  .scr-dream .bubble p .spice{ color:#7FE9CF; }
+  .scr-dream .bubble time{ display:block; font-size:10px; font-weight:600; color:#A6ACB3; margin-top:5px; }
+  .scr-dream .sass-chip{ position:absolute; z-index:52; display:inline-flex; align-items:center; gap:7px;
+               font-size:12px; font-weight:800; color:#0B2B26; background:#0FD2B1; padding:9px 14px;
+               border-radius:20px; box-shadow:0 4px 14px rgba(15,210,177,.35); }
+  .scr-dream .sass-chip .bar{ letter-spacing:1px; font-size:11px; }
+
+  .scr-dream /* sass ramp strip below the phones */
+  .rampwrap{ max-width:980px; margin-top:6px; }
+  .scr-dream .ramp{ display:grid; grid-template-columns:150px repeat(3, 1fr); gap:10px; }
+  .scr-dream .ramp h5{ grid-column:span 4; font-size:12.5px; font-weight:800; color:#F1F3F5; padding:10px 2px 2px; }
+  .scr-dream .ramp .rlab{ font-size:10.5px; font-weight:700; color:#A6ACB3; text-transform:uppercase; letter-spacing:.08em; align-self:center; }
+  .scr-dream .rcell{ background:#fff; border:1px solid rgba(255,255,255,.10); border-radius:12px; padding:10px 12px;
+            font-size:12.5px; line-height:1.45; color:#F1F3F5; font-weight:500; }
+  .scr-dream .rcell b{ color:#7FE9CF; }
+  .scr-dream .rcell.hd{ background:transparent; border:none; padding:10px 12px 4px; font-size:10px; color:#A6ACB3; }
+  .scr-dream .rcell.spice{ border-color:#B4EDE0; background:#0F3B4F; }
+  .scr-dream .avatar-photo{ width:100%; height:100%; object-fit:contain; object-position:bottom center; display:block;
+                   filter:saturate(.94) contrast(1.01); }
+  .scr-dream .duo-clip img{ max-width:100%; max-height:100%; }
+  .scr-dream .stage .bounce{ -webkit-user-drag:none; }
+  .scr-dream .avatar-inner{ transition:none; }
+  .scr-dream .avatar-inner img{ pointer-events:none; }
+
+  .scr-dream .pair{ position:absolute; left:16px; right:16px; top:338px; z-index:46; background:#0F3B4F;
+          border-radius:20px; border:1px solid rgba(255,255,255,.09); box-shadow:0 10px 26px rgba(35,32,29,.10);
+          padding:13px 15px 11px; }
+  .scr-dream .pair .pr{ display:flex; gap:10px; align-items:center; }
+  .scr-dream .pfig{ position:relative; flex:1; text-align:center; }
+  .scr-dream .pfig img{ width:100%; height:150px; object-fit:contain; object-position:bottom center; display:block; filter:saturate(.94); }
+  .scr-dream .pfig .pnm{ position:absolute; left:6px; top:4px; font-size:10px; font-weight:800; letter-spacing:.1em; color:#A6ACB3; text-transform:uppercase; }
+  .scr-dream .pair .vs{ font-size:12px; font-weight:800; color:#7FE9CF; flex:none; }
+  .scr-dream .pair .pl{ display:flex; justify-content:space-around; gap:8px; margin-top:8px; }
+  .scr-dream .pair .pl b{ font-size:12.5px; color:#F1F3F5; font-weight:800; }
+  .scr-dream .pair .pl s{ font-size:10.5px; font-weight:700; color:#A6ACB3; text-decoration:none; }
+
+  .scr-dream .abwrap{ position:absolute; left:18px; right:18px; top:332px; bottom:74px; z-index:46;
+            display:flex; flex-direction:column; background:#0F3B4F; border-radius:22px;
+            border:1px solid rgba(255,255,255,.09); box-shadow:0 12px 30px rgba(35,32,29,.10); }
+  .scr-dream .abhead{ display:flex; justify-content:space-between; align-items:center; padding:14px 18px 4px; }
+  .scr-dream .abhead b{ font-size:14.5px; color:#F1F3F5; font-weight:800; }
+  .scr-dream .abhead span{ font-size:10.5px; font-weight:700; color:#7FE9CF; }
+  .scr-dream .abdeck{ display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:10px 16px 12px; flex:1; }
+  .scr-dream .abpane{ position:relative; border-radius:16px; overflow:hidden;
+            background:linear-gradient(180deg,#0F3B4F, #0F3B4F); border:1px solid rgba(255,255,255,.09); }
+  .scr-dream .abfig{ position:absolute; left:0; right:0; top:44px; bottom:60px; }
+  .scr-dream .abfig img{ width:100%; height:100%; object-fit:contain; object-position:center bottom; filter:saturate(.95); }
+  .scr-dream .abpane.dream .abfig img{ object-position:center 20%; }
+  .scr-dream .abpane::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:52px; pointer-events:none;
+                   background:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.92) 62%); }
+  .scr-dream .abtag{ position:absolute; left:10px; bottom:30px; font-size:10px; font-weight:800; color:#A6ACB3; letter-spacing:.09em; z-index:2; }
+  .scr-dream .abnum{ position:absolute; left:10px; bottom:12px; font-size:17px; font-weight:800; color:#F1F3F5; z-index:2; font-variant-numeric:tabular-nums; }
+  .scr-dream .abdelta{ position:absolute; right:10px; bottom:12px; font-size:11px; font-weight:800; color:#7FE9CF; z-index:2; }
+  .scr-dream .abfoot{ display:flex; justify-content:space-around; align-items:center; padding:12px 10px 14px; border-top:1px solid rgba(255,255,255,.08); }
+  .scr-dream .abfoot b{ font-size:12px; color:#F1F3F5; font-weight:700; }
+  .scr-dream .abfoot .dim{ color:#A6ACB3; font-weight:600; }
+
+  .scr-dream /* ---- duo stage (dream screen) ---- */
+  .duo-clip{ position:absolute; inset:110px 0 0 0; background:#F6F2EE; }
+  .scr-dream .duo-clip img{ position:absolute; left:0; bottom:0; width:100%; height:100%;
+                  object-fit:contain; object-position:bottom center; filter:saturate(.94); }
+  .scr-dream .stage[style*="192px"] .duo-clip{ inset:110px 0 0 0; }
+  .scr-dream .stage[style*="56%"] .duo-clip{ inset:102px 0 0 0; }
+  .scr-dream .stage[style*="56%"] .duo-clip img{ width:118px; height:122px; left:50%; transform:translateX(-50%); }
+  .scr-dream .duo-panel{ position:absolute; left:0; right:0; bottom:0; height:240px; z-index:37; background:#083243; }
+  .scr-dream .duo-tag{ position:absolute; top:126px; z-index:40; font-size:10px; font-weight:800; letter-spacing:.1em;
+             color:#A6ACB3; text-transform:uppercase; background:rgba(255,255,255,.9); border:1px solid rgba(255,255,255,.10);
+             padding:5px 10px; border-radius:14px; }
+  .scr-dream .duo-tag b{ font-size:13px; color:#23201D !important; font-weight:800; margin-left:5px; }
+  .scr-dream .duo-seam{ position:absolute; top:96px; bottom:150px; width:3px; z-index:44; background:#0F3B4F;
+              box-shadow:0 0 0 1px rgba(127,233,207,.18); border-radius:2px; }
+  .scr-dream .duo-knob{ position:absolute; top:52%; left:50%; transform:translate(-50%,-50%); z-index:45;
+              background:#0FD2B1; color:#0B2B26; font-size:10.5px; font-weight:800;
+              padding:7px 11px; border-radius:16px; box-shadow:0 4px 14px rgba(15,210,177,.4); white-space:nowrap; }
+
+  .scr-dream /* build deck cards (sheet up) */
+  .bstat{ display:flex; justify-content:space-between; align-items:center; padding:8px 0; }
+  .scr-dream .bstat + .bstat{ border-top:1px solid rgba(255,255,255,.09); }
+  .scr-dream .bstat .k{ font-size:12.5px; color:#F1F3F5; font-weight:600; }
+  .scr-dream .bstat .v{ font-size:12.5px; color:#F1F3F5; font-weight:800; }
+  .scr-dream .bstat .v i{ font-style:normal; font-size:10.5px; color:#A6ACB3; font-weight:700; }
+  .scr-dream .vbtn{ display:block; width:100%; text-align:center; font-size:13.5px; font-weight:800; color:#0B2B26;
+          background:#0FD2B1; border:none; border-radius:14px; padding:12px 0 11px; }
+  .scr-dream .gbtn{ display:block; width:100%; text-align:center; font-size:12.5px; font-weight:700; color:#A6ACB3;
+          background:transparent; border:1px solid rgba(255,255,255,.09); border-radius:14px; padding:10px 0 9px; margin-top:8px; }
+
+
+  .scr-dream /* --- dark-mode v2: ink follows what's behind each element (state-aware) --- */
+  .event-pill, .scr-dream .event-pill b{ color:#23201D !important; }
+  .scr-dream .w-btn{ color:#23201D !important; }
+  .scr-dream .sw{ color:#6E7178 !important; }
+  .scr-dream .sw.on{ color:#23201D !important; }
+  .scr-dream .ab-chip{ color:#163300 !important; }
+  .scr-dream .cell:first-of-type .trainer-line p{ color:#F1F3F5 !important; }
+  .scr-dream .cell:first-of-type .trainer-line small{ color:#A6ACB3 !important; }
+  .scr-dream .node .nm{ color:#A6ACB3 !important; }
+  .scr-dream .node .wt{ color:#F1F3F5 !important; }
+  .scr-dream .node.on .wt{ color:#0FD2B1 !important; }
+  .scr-dream .abnum, .scr-dream .abfoot b{ color:#23201D !important; }
+  .scr-dream .abtag{ color:#6E7178 !important; }
+  .scr-dream .abpane.dream .abtag{ color:#076A55 !important; }
+  .scr-dream .abdelta{ color:#076A55 !important; }
+  .scr-dream .tab{ color:#8F959C !important; }
+  .scr-dream .tab.on{ color:#0FD2B1 !important; }
+  .scr-dream .lrow{ color:#F1F3F5 !important; }
+  .scr-dream .lrow .amt{ color:#A6ACB3 !important; }
+  .scr-dream .lrow .amt.warn{ color:#FFC46B !important; }
+  .scr-dream .micro{ color:#A6ACB3 !important; }
+  .scr-dream .tcard h4{ color:#A6ACB3 !important; }
+  .scr-dream .bignum{ color:#F1F3F5 !important; }
+  .scr-dream .bubble p{ color:#F1F3F5 !important; }
+  .scr-dream .duo-tag[style*="right"]{ color:#6E7178 !important; }
+
+  .scr-dream .bubble:after{ background:#0F3B4F !important; border-color:rgba(255,255,255,.09) !important; }
+  .scr-dream .duo-tag{ text-shadow:0 1px 2px rgba(255,255,255,.75); }
+</style>
+<style>
+/* ===== shell ===== */
+html,body{background:#083243;}
+body{display:flex;flex-direction:column;align-items:center;padding:24px 12px 40px;}
+.r{display:none;width:100%;max-width:430px;}
+.r.active{display:block;}
+.r.active .phone{margin:0 auto;max-height:92vh;}
+@media (max-width:430px){
+  body{padding:0;}
+  .r.ax-fr{height:100dvh;border-radius:0;max-width:none;}
+  .r.active .phone{width:100vw;height:100dvh;max-height:none;border-radius:0;padding:0;box-shadow:none;}
+  .r.active .screen{border-radius:0;}
+  .r.active .island{display:none;}
+}
+/* sheet state gates */
+.sheet.down .sh-head,.sheet.down .deck,.sheet.down .footdots{display:none;}
+.sheet.up .sh-row{display:none;}
+/* home sheet-up stage compaction */
+.phone.st-up .floor{width:260px !important;height:240px !important;bottom:auto !important;top:36px !important;}
+.phone.st-up .event-pill{top:88px !important;}
+.phone.st-up .avatar-wrap{width:118px !important;top:102px !important;}
+.phone.st-up .avatar-inner{width:118px !important;height:122px !important;}
+.phone.st-up .floor-shadow{width:124px !important;height:16px !important;top:222px !important;}
+.phone.st-up .trainer-line{top:240px !important;}
+.phone.st-up .trainer-line p{font-size:12px !important;}
+.phone.st-up .wardrobe{top:276px !important;}
+.phone.st-up .scrub{top:318px !important;}
+/* top-zone ink on the white photo: dark ink + halo (app copy) */
+.appbar .p-mark{color:#0D1A18 !important;text-shadow:0 1px 3px rgba(255,255,255,.85);}
+.appbar .p-mark .lg{color:#0D1A18 !important;}
+.p-phase{color:#0A5847 !important;}
+.event-pill{background:rgba(255,255,255,.95);}
+.event-pill{color:#2A3540 !important;}
+.event-pill b{color:#101012 !important;text-shadow:none !important;}
+.phone.st-up .trainer-line{color:#0E1A18 !important;}
+.phone.st-up .trainer-line small{color:rgba(16,16,18,.7) !important;}
+#r-home .pnm{color:#101012 !important;text-shadow:0 1px 2px rgba(255,255,255,.85);}
+#r-home .pfig:last-child .pnm{color:#0A8671 !important;}
+.phone.st-up .avatar-photo{height:122px !important;object-fit:contain !important;object-position:bottom center !important;}
+.phone.st-up .wardrobe .wl-down{display:none;}
+.phone.st-up .wardrobe .wl-up{display:flex;}
+.phone:not(.st-up) .wardrobe .wl-up{display:none !important;}
+/* dream up-state sheet geometry */
+.scr-dream .sheet.up{top:56% !important;height:calc(44% - 66px) !important;}
+/* wardrobe dual state: wrap cell1's set in .wl-down, cell2's .sw set in .wl-up */
+.ax-toast{position:absolute;left:50%;transform:translateX(-50%);bottom:86px;background:rgba(255,255,255,.92);color:#101012;
+ font-size:11.5px;font-weight:600;padding:7px 13px;border-radius:14px;z-index:80;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;}
+.ax-toast.on{opacity:1;}
+</style>
+<style>/* ===== authored screens (ax- namespace) ===== */
+.ax-fr .ax-amber .ax-chip{color:#4A3007;border-color:#C9A25E;}
+.ax-fr .ax-amber .ax-chip.on{background:#4A3007;color:#F7EBD4;border-color:#E8C77E;}
+.ax-step{display:none;}
+.ax-amber .ax-q{color:#4A3007;}
+.ax-amber .ax-note{color:#4A3007;}
+.ax-fr{position:relative;height:848px;overflow:hidden;background:#083243;border-radius:46px;}
+.ax-fr .ax-wrap{position:static;overflow-y:auto;-webkit-overflow-scrolling:touch;height:100%;box-sizing:border-box;padding:34px 18px 40px;}
+.ax-h1{font-size:21px;font-weight:800;color:#F1F3F5;letter-spacing:-.01em;margin:6px 0 4px;}
+.ax-sub{font-size:12.5px;color:#A6ACB3;line-height:1.5;margin-bottom:14px;}
+.ax-q{font-size:13px;font-weight:700;color:#F1F3F5;margin:12px 0 7px;}
+.ax-choices{display:flex;gap:8px;flex-wrap:wrap;}
+.ax-chip{font-size:12.5px;font-weight:600;color:#F1F3F5;background:rgba(127,233,207,.08);border:1px solid rgba(127,233,207,.22);border-radius:18px;padding:7px 14px;}
+.ax-chip.on{background:#DCF7F0;color:#101012;border-color:#7FE9CF;}
+.ax-card{background:rgba(255,255,255,.045);border:1px solid rgba(127,233,207,.10);border-radius:16px;padding:12px 13px;}
+.ax-note{font-size:11px;color:#A6ACB3;line-height:1.45;margin-top:8px;}
+.ax-note b{color:#7FE9CF;font-weight:700;}
+.ax-cta{display:block;width:100%;text-align:center;background:#0FD2B1;color:#052026;font-weight:800;font-size:14px;border:0;border-radius:14px;padding:13px 0;}
+.ax-ghost{display:block;width:100%;text-align:center;background:transparent;color:#A6ACB3;font-weight:600;font-size:12px;border:1px solid rgba(166,172,179,.35);border-radius:14px;padding:11px 0;}
+.ax-amber{background:#F7EBD4;color:#4A3007;border:1px solid #E8C77E;}
+.ax-amber b{color:#8A5A0A;}
+.ax-amberpill{font-size:10.5px;font-weight:800;letter-spacing:.08em;background:#F2C057;color:#4A3007;border-radius:12px;padding:4px 10px;display:inline-block;}
+.ax-greenpill{font-size:10.5px;font-weight:800;letter-spacing:.08em;background:#DCF7F0;color:#0A5847;border-radius:12px;padding:4px 10px;display:inline-block;}
+.ax-slider{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;background:rgba(127,233,207,.18);outline:none;}
+.ax-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:#0FD2B1;border:3px solid #052026;box-shadow:0 0 0 1.5px #7FE9CF;}
+.ax-lrow{display:flex;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid rgba(127,233,207,.08);}
+.ax-eta{font-size:15px;font-weight:800;color:#7FE9CF;}
+.ax-disabled{opacity:.45;}
+.ax-big{font-size:34px;font-weight:800;color:#F1F3F5;letter-spacing:-.02em;}
+.ax-mono{font-variant-numeric:tabular-nums;}
+.ax-dots{display:flex;gap:5px;justify-content:center;margin:10px 0 6px;}
+.ax-dots i{width:6px;height:6px;border-radius:50%;background:rgba(166,172,179,.4);}
+.ax-dots i.on{background:#0FD2B1;}
+.ax-scan{width:100%;height:150px;border-radius:14px;background:radial-gradient(ellipse at 50% 42%, rgba(127,233,207,.14), rgba(127,233,207,0) 70%),linear-gradient(180deg, rgba(127,233,207,.05), rgba(8,50,67,0));display:flex;align-items:flex-end;justify-content:center;overflow:hidden;position:relative;}
+.ax-shine{position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(127,233,207,.16) 50%,transparent 70%);transform:translateX(-100%);}
+.ax-capturing .ax-shine{animation:axshine 1.1s linear infinite;}
+@keyframes axshine{to{transform:translateX(100%);}}</style>
+<style>/* ===== profile store + hydration (ax3) ===== */
+.ax-poses{display:flex;gap:8px;flex-wrap:wrap;}
+.ax-pose{position:relative;display:flex;align-items:center;gap:8px;border:1px solid rgba(127,233,207,.28);border-radius:12px;padding:8px 12px;overflow:hidden;}
+.ax-pose i{font-style:normal;font-size:12px;color:#A6ACB3;font-weight:600;}
+.ax-pose b{font-size:15px;color:#7FE9CF;}
+.ax-pose img{display:none;width:34px;height:34px;border-radius:8px;object-fit:cover;}
+.ax-pose.has img{display:block;}
+.ax-pose.has i{color:#DCF7F0;}
+.ax-pose.has b{display:none;}
+.ax-numrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ax-input{background:rgba(127,233,207,.07);border:1px solid rgba(127,233,207,.22);border-radius:10px;color:#F1F3F5;font-size:15px;font-weight:600;padding:10px 12px;width:120px;outline:none;}
+.ax-input:focus{border-color:#0FD2B1;}
+.ax-input::placeholder{color:rgba(166,172,179,.65);font-weight:500;}
+.ax-input[type=text]{width:170px;}
+.ax-input[type=date]{width:auto;min-width:150px;color:#A6ACB3;}
+.ax-subtag{font-size:10.5px;color:#A6ACB3;font-weight:600;}
+.ax-prot{font-size:11.5px;font-weight:800;color:#7FE9CF;margin-left:6px;}
+.ax-splitbar{display:flex;height:10px;border-radius:6px;overflow:hidden;margin-top:10px;background:rgba(255,255,255,.04);}
+.ax-splitbar i{display:block;height:100%;}
+.ax-bar{display:inline-block;width:70px;height:7px;border-radius:6px;background:rgba(127,233,207,.14);overflow:hidden;margin:0 6px;}
+.ax-bar i{display:block;height:100%;border-radius:6px;}
+.ax-microitem{display:flex;align-items:center;justify-content:space-between;padding:5.5px 0;border-bottom:1px solid rgba(127,233,207,.07);font-size:12.5px;color:#F1F3F5;font-weight:600;}
+.ax-microitem:last-child{border-bottom:0;}
+.ax-budgetbar{position:relative;display:flex;height:12px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,.05);margin-top:8px;}
+.ax-budgetbar i{display:block;height:100%;background:#0FD2B1;opacity:.85;}
+.ax-session{margin-bottom:10px;}
+.ax-mname{font-size:12.5px;font-weight:600;color:#F1F3F5;}
+.ax-sets{display:inline-flex;align-items:center;gap:5px;color:#A6ACB3;font-size:12px;}
+.ax-si{width:44px !important;padding:7px 6px !important;font-size:13px !important;text-align:center;}
+.ax-sets > .ax-si:first-child{}
+.ax-rpe{display:flex;align-items:center;gap:8px;}
+.ax-rpe i{font-style:normal;width:40px;height:34px;line-height:34px;text-align:center;border-radius:10px;background:rgba(127,233,207,.08);border:1px solid rgba(127,233,207,.22);color:#F1F3F5;font-weight:700;font-size:13px;}
+.ax-rpe i.on{background:#0FD2B1;color:#052026;border-color:#7FE9CF;}
+.ax-lib{margin-top:10px;background:rgba(8,50,67,.75);border:1px solid rgba(127,233,207,.16);border-radius:12px;padding:10px 12px;}
+.ax-lib .ax-lrow{padding:7px 2px;}</style>
+<style>
+/* safe-area: keep the tab bar clear of the iPhone home indicator */
+.tabs{padding-bottom:env(safe-area-inset-bottom);}
+.ax-fr .ax-wrap{padding-bottom:calc(78px + env(safe-area-inset-bottom));}
+.ax-fr .tabs{background:#072A36;box-shadow:0 -1px 0 rgba(127,233,207,.14);}
+.ax-fr .tabs .tab{color:#EDF0F2;}
+.ax-fr .tabs .tab:not(.on){color:#8A98A5;}
+</style>
+<style>
+.mealthumb{position:absolute;top:8px;right:8px;width:40px;height:40px;border-radius:8px;object-fit:cover;border:1px solid rgba(127,233,207,.4);z-index:3;}
+.ax-phases{display:flex;height:16px;border-radius:6px;overflow:hidden;margin-top:8px;background:rgba(255,255,255,.04);}
+.ax-phases i{display:block;height:100%;}
+.ax-glink{color:#7FE9CF;font-weight:700;text-decoration:none;}
+.ax-glink:active{opacity:.7;}</style></head><body>
+<div class="r active" data-r="home" id="r-home"><div class="cell">
+  <div class="phone"><div class="island"></div><div class="screen">
+<div class="stage" style="bottom:192px"><div class="floor" style="width:340px;height:300px;bottom:30px"></div><div class="appbar">
+          <span class="p-mark">✦ <span class="lg">YouTrain</span></span>
+          <span class="p-phase">loss · wk 24</span>
+        </div><div class="event-pill">Event · <b>wedding — Jun 14</b> · 33 wk · <b>80% on pace</b></div><div class="avatar-wrap" style="width:342px;top:108px;z-index:30"><div class="avatar-inner" style="width:342px;height:352px"><div class="bounce stage-fig"><img class="avatar-photo" src="img/today.jpg" alt="" draggable="false"></div></div></div><div class="floor-shadow" style="width:300px;height:34px;top:428px"></div><div class="trainer-line" style="top:428px">
+          <p><span class="gl">✦</span> Hold me — I train you until you match my specs.</p>
+          <small>drag to spin · it breathes until you arrive</small>
+        </div><div class="wardrobe" style="top:470px"><div class="wl-down">
+          <span class="w-btn"><svg class="wico" width="14" height="14" viewBox="0 0 14 14"><path d="M5 2 L2.5 4 3.5 6 5 5.5 5 12 H9 L9 5.5 10.5 6 11.5 4 9 2 A2 2 0 0 1 5 2Z" fill="none" stroke="#7FE9CF" stroke-width="1.4" stroke-linejoin="round"/></svg>Wardrobe</span>
+          <span class="ab-chip">⇄ A/B pair</span>
+        </div><div class="wl-up"><span class="sw on">jeans · on</span><span class="sw">suit</span><span class="sw">gym kit</span><span class="sw">＋ wardrobe</span></div></div><div class="scrub" style="top:512px">
+          <div class="rail">
+            <span class="seg then-now"></span><span class="seg now-dream"></span>
+            <span class="node t0"><div class="nm">then</div><span class="wt">218</span><span class="dot off"></span></span>
+            <span class="node t1 on"><div class="nm">now</div><span class="wt">212.4</span><span class="dot"></span></span>
+            <span class="node t2"><div class="nm">dream</div><span class="wt">185</span><span class="dot off"></span></span>
+          </div>
+        </div></div>
+      <div class="sheet down" id="hsheet"><div class="handle"></div>
+<div class="sh-row"><div><div class="sh-t">Your numbers — drag the sheet up</div><div class="sh-s">Trend 212.4 · −0.6/wk · the cards inside</div></div><div class="deckdots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div></div>
+<div class="handle"></div>
+        <div class="sh-head"><b>Your numbers</b><span>swipe the cards ⇢</span></div>
+        <div class="deck">
+          <div class="tcard" style="padding:11px 12px 9px">
+            <h4>you now ⇄ dream you</h4>
+            <div class="pr">
+              <div class="pfig"><img src="img/today.jpg" alt=""><span class="pnm">now · 212.4</span></div>
+              <div class="vs">⇄</div>
+              <div class="pfig"><img src="img/dream-body.jpg" alt=""><span class="pnm" style="color:#7FE9CF">dream · 185</span></div>
+            </div>
+            <div class="pl"><b>−27.4 lb</b><s>±4.6 @ Jun 14</s><b>80%</b></div>
+          </div>
+          <div class="tcard">
+            <h4>Trend weight · 7-day</h4>
+            <div class="bignum">212.4 <small>lb</small><span class="delta">−0.6 lb/wk</span></div>
+            <svg viewBox="0 0 320 78" width="100%" height="42" style="margin-top:6px">
+              <rect x="6" y="42" width="308" height="22" rx="5" fill="#DCF7F0" stroke="rgba(127,233,207,.16)"/>
+              <text x="8" y="38" font-size="10.5" font-weight="600" fill="#A6ACB3" font-family="-apple-system">190.5</text>
+              <text x="8" y="76" font-size="10.5" font-weight="600" fill="#A6ACB3" font-family="-apple-system">179.5</text>
+              <polyline points="6,18 88,21 168,24 268,28" fill="none" stroke="#7FE9CF" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="268" cy="28" r="5" fill="#0FD2B1" stroke="#fff" stroke-width="1.5"/>
+            </svg>
+            <div class="micro"><b>One drop doesn't move the water.</b></div>
+          </div>
+          <div class="tcard">
+            <h4>Ledger</h4>
+            <div class="lrow"><i style="background:#0FD2B1"></i>Protein<span class="amt">6/7 days</span></div>
+            <div class="lrow"><i style="background:#0FD2B1"></i>Workouts<span class="amt">3/3 this week</span></div>
+            <div class="lrow"><i style="background:#AD6500"></i>Sleep<span class="amt warn">6.8 h avg</span></div>
+            <div class="micro">Amber = watch state, never a grade.</div>
+          </div>
+          <div class="tcard">
+            <h4>Coach</h4>
+            <div class="micro" style="margin-top:7px;font-size:12px;color:#F1F3F5;line-height:1.5">
+              <b style="color:#7FE9CF">✦</b> "Protein held through the travel week. I arrive <b>Mar 4 – May 21</b> at this pace."<br><span style="color:#A6ACB3">today · 8:04</span>
+            </div>
+            <div class="micro">Honest range, not a date. Confidence = 80%.</div>
+          </div>
+          <div class="tcard plan-door">
+            <div class="pd-in"><span class="pd-g">✦</span>
+              <div><b>Create workout plan</b>
+              <span>the trainer builds your week — injuries off-limits, 1 min</span></div>
+            </div>
+          </div>
+          <div class="tcard action-card">
+            <b>Log dinner · ~8 sec</b>
+            <span>photo or voice — that's the whole job</span>
+          </div>
+        </div>
+        <div class="footdots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+<div class="tabs">
+        <span class="tab on"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v4l2.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Today</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 9V4h5M4 4l5 5M16 11v5h-5M16 16l-5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Log</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 16V9M10 16V4M16 16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Progress</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 17c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>You</span>
+      </div>
+  </div></div>
+</div>
+
+<!-- phone 2 · sheet up + pair card -->
+</div>
+<div class="r ax-fr" data-r="on" id="r-on">
+<div class="ax-wrap" id="ax-on">
+  <div class="ax-dots" id="on-dots"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+  <div class="ax-step" data-step="0">
+    <h1 class="ax-h1">First, a safe start</h1>
+    <p class="ax-sub">A few questions about eating patterns and dieting history. Honest answers keep you safe — this isn't judgment.</p>
+    <div class="ax-card"><div class="ax-q">Have you lost 10+ lb deliberately before?</div>
+      <div class="ax-choices"><span class="ax-chip on">Yes</span><span class="ax-chip">No</span></div></div>
+    <div class="ax-card"><div class="ax-q">Weight swings year to year?</div>
+      <div class="ax-choices"><span class="ax-chip">Steady</span><span class="ax-chip on">Some</span><span class="ax-chip">A lot</span></div></div>
+    <div class="ax-card"><div class="ax-q">Anything about food that feels hard?</div>
+      <div class="ax-choices"><span class="ax-chip on">No</span><span class="ax-chip">Prefer not to say</span><span class="ax-chip">Yes</span></div></div>
+  <div class="ax-card ax-amber" id="ax-care" style="display:none;margin-top:12px"><div class="ax-q">Then we start gentler — and that's the plan, not a failure.</div>
+      <p class="ax-note" style="color:#4A3007">Your engine speed is capped below the safe rate, breaks come more often, and the check-ins ask how it's feeling — not just what it weighs.</p>
+      <span class="ax-amberpill">gentle path · locked in</span></div>
+    <p class="ax-note">Safety is not optional here: your engine speed is capped at a safe rate no matter what your levers say. A flagged answer routes to a <b>gentler path</b>, not an exit.</p>
+  </div>
+  <div class="ax-step" data-step="1" style="display:none">
+    <h1 class="ax-h1">Baseline — current you, verified</h1>
+    <div class="ax-card"><div class="ax-q">Live photos — 4 poses</div>
+      <div class="ax-poses">
+        <span class="ax-pose" data-slot="front"><i>front</i><b>＋</b></span>
+        <span class="ax-pose" data-slot="side"><i>side</i><b>＋</b></span>
+        <span class="ax-pose" data-slot="back"><i>back</i><b>＋</b></span>
+        <span class="ax-pose" data-slot="threequarters"><i>¾</i><b>＋</b></span>
+      </div>
+      <p class="ax-note">Camera guided, retakes free — tap a slot (camera or your photo library). Photos stay on this device; nothing uploads. The real build adds on-device pose-checking — this mock passes them straight through.</p>
+    </div>
+    <div class="ax-card"><div class="ax-q">Today's weigh-in <a class="ax-glink" data-from="on">how to →</a></div>
+      <div class="ax-numrow"><input class="ax-input" id="on-w0" type="number" inputmode="decimal" placeholder="current lb"><span class="ax-note" style="margin:0 0 0 8px">trend fills in as check-ins land</span></div>
+      <p class="ax-note">Same protocol every time: morning · after bathroom · before coffee · minimal clothing — same scale.</p></div>
+    <div class="ax-card"><div class="ax-q">Waist <span class="ax-note" style="display:inline;margin:0">optional · double-measured</span></div>
+      <div class="ax-numrow"><input class="ax-input" id="on-waist" type="number" inputmode="decimal" placeholder="inches"> <span class="ax-chip">×2 ✓</span></div></div>
+    <div class="ax-card"><div class="ax-q">Scale pairing</div>
+      <span class="ax-chip">Withings — demo only in the mock</span>
+      <p class="ax-note">In the real build this imports scale history so an honest trend exists on day one.</p></div>
+  </div>
+  <div class="ax-step" data-step="2" style="display:none">
+    <h1 class="ax-h1">Build the future you</h1>
+    <div class="ax-card"><div class="ax-q">Goal weight</div>
+      <div class="ax-numrow"><input class="ax-input" id="on-goal" type="number" inputmode="decimal" placeholder="goal lb">
+        <button class="ax-ghost" id="on-suggest" style="width:auto;padding:9px 14px">suggest ideal</button></div>
+      <p class="ax-note">Entry is exact, never auto-locked. Display: <b id="on-band">179.5–190.5 lb</b> — band ±3% is how the app talks once you're at goal.</p>
+      <div class="ax-lrow" style="margin-top:6px"><span class="ax-q" style="margin:0">Body-fat target</span><span class="ax-note" style="margin:0">optional — 15% is the demo default</span></div>
+    </div>
+    <div class="ax-card"><div class="ax-q">Old photo — “this was me”</div>
+      <div class="ax-poses"><span class="ax-pose" data-slot="look"><i>look</i><b>＋</b></span></div>
+      <p class="ax-note">Defines the dream body's <b>look</b>. Your numbers + live photos define the <b>data</b>. Your face carries over. (The real dream figure generation is decision ④ — for now the dream pane shows the stand-in until then.)</p></div>
+    <div class="ax-card"><div class="ax-q">The event you're walking toward</div>
+      <div class="ax-numrow"><input class="ax-input" id="on-event-name" type="text" placeholder="event name (wedding)"><input class="ax-input" id="on-event-date" type="date" value=""></div>
+      <p class="ax-note">The timeline is honest against this. Leave empty and it's just the pace.</p></div>
+    <div class="ax-card"><div class="ax-lrow" id="on-glp-row" style="border:0"><span class="ax-q" style="margin:0">On GLP-1?</span><span class="ax-chip" id="on-glp-chip">tap if yes</span></div>
+      <p class="ax-note">Protein-first mode: protein + strength-trend become the hero numbers — muscle is what the shot regime eats first. Toggleable later in You → settings.</p></div>
+    <p class="ax-note">Revealed now — no gating, no big-reveal drama. The pair builds as you go and converges over the months.</p>
+  </div>
+  <div class="ax-step" data-step="3" style="display:none">
+    <div id="ax-on-levers"></div>
+  </div>
+  <div class="ax-step" data-step="4" style="display:none">
+    <h1 class="ax-h1">Your honest timeline</h1>
+    <div class="ax-card"><div class="ax-lrow"><span class="ax-q" style="margin:0">Arrival at this pace</span><span class="ax-eta" id="on-eta">—</span></div>
+      <p class="ax-note" id="on-eta-note" style="margin-top:2px"></p></div>
+    <div class="ax-card" style="margin-top:10px"><div class="ax-lrow"><span class="ax-q" style="margin:0">The wedding</span><span class="ax-eta" id="on-event-line">—</span></div>
+      <p class="ax-note" id="on-event-note" style="margin-top:2px"></p></div>
+    <p class="ax-note">Anti-hype is the brand: a <b>confidence band</b>, never a countdown clock. Every check-in moves it; missed weeks don't punish, they re-learn.</p>
+    <button class="ax-cta" id="on-finish" style="margin-top:14px">That's the plan → enter the app</button>
+    <button class="ax-ghost skip" style="margin-top:8px">Skip demo — go to home</button>
+  </div>
+  <button class="ax-cta" id="on-next" style="margin-top:14px">Continue</button>
+</div></div>
+<div class="r ax-fr" data-r="log" id="r-log">
+  <div class="ax-wrap" id="ax-log">
+    <h1 class="ax-h1">Log</h1>
+  <div class="ax-card" id="ax-log-photo">
+    <div class="ax-q">📷 What you're about to eat</div>
+    <div id="log-result">
+      <div class="lrow"><i style="background:#0FD2B1"></i>Salmon plate <span class="amt">estimate</span></div>
+      <div class="ax-big ax-mono" style="font-size:22px;margin:8px 0 2px">~640 kcal <span style="font-size:12px;color:#A6ACB3;font-weight:700">· P48 C12 F38</span></div>
+      <p class="ax-note">Estimates are fine by design — the observed-TDEE loop absorbs their error. <b>The scale is the truth-anchor.</b></p>
+    </div>
+  </div>
+  <div class="ax-card" id="ax-log-voice" style="margin-top:10px">
+    <div class="ax-q">◉ Just tell me</div>
+    <div id="voice-result" style="display:none">
+      <div class="ax-big" style="font-size:16px">“Two eggs, toast, black coffee”</div>
+      <div class="lrow" style="margin-top:8px"><i style="background:#0FD2B1"></i>Logged <span class="amt">in 9s</span></div>
+      <p class="ax-note">Voice → macros + the day's protein line updates itself.</p>
+    </div>
+  </div>
+  <div class="ax-card" id="ax-log-same" style="margin-top:10px">
+    <div class="ax-q">Same lunch as Tuesday?</div>
+    <span class="ax-chip on">1-tap</span>
+  </div>
+  <div class="ax-card ax-amber" style="margin-top:10px">
+    <div class="ax-q">Pizza — Saturday night</div>
+    <span class="ax-amberpill">planned</span>
+    <p class="ax-note">Weekly budget, not daily quotas — <b>a single meal never turns the app red.</b></p>
+  </div>
+  <div class="ax-card" id="ax-day" style="margin-top:12px;border-color:rgba(127,233,207,.35)">
+    <div class="ax-q">Today's plate</div>
+    <div id="ax-plate-list"></div>
+    <div class="ax-lrow" style="margin-top:10px"><span class="ax-subtag">day total</span><span class="ax-eta" id="ax-kcal">— kcal</span></div>
+    <div class="ax-lrow" style="border:0"><span class="ax-subtag">protein</span><span><span class="ax-eta" id="ax-prot">—</span> <span class="ax-subtag" id="ax-protlb">—</span> <span class="ax-subtag" id="ax-protlb-txt"></span></span></div>
+    <div class="ax-splitbar" id="ax-split"><i></i><i></i><i></i></div>
+    <div class="ax-subtag" id="ax-splitlab" style="margin-top:4px"></div>
+    <p class="ax-note">Estimates are fine by design — the observed-TDEE loop absorbs their error. <b>The scale is the truth-anchor; these numbers steer the week, not the day.</b></p>
+  </div>
+  <div class="ax-card" style="margin-top:10px"><div class="ax-q">Micros — the cheap-insurance strip</div>
+    <div id="ax-micros"></div>
+    <p class="ax-note">Demo values. The full bloods-panel version (vitamin D, B12, omega-3, heavy metals) = the later <b>pro-tier upsell</b> the idea inbox parked — not claimed as a feature here.</p></div>
+  <div class="ax-card" style="margin-top:10px"><div class="ax-q">Weekly budget, not daily quotas</div>
+    <div class="ax-budgetbar"><i id="ax-bused" style="width:68%"></i><i id="ax-bplan" style="width:7%;background:#F2C057"></i></div>
+    <div class="ax-lrow" style="border:0;padding-bottom:2px"><span class="ax-subtag">used + planned this week</span><span class="ax-subtag" id="ax-budgettxt">10,450 + 1,100 planned of 15,400</span></div>
+  </div>
+  <div class="ax-card" id="ax-wlog" style="margin-top:10px"><div class="ax-q logme">◉ voice workout log</div>
+    <div class="ax-rpe" style="margin-top:8px"><span class="ax-subtag" style="margin-right:6px">RPE</span><i>7</i><i>8</i><i>9</i></div>
+    <div id="ax-wlog-done" style="display:none"><span class="ax-greenpill" style="margin-top:8px;display:inline-block">session logged · strength trend +1</span></div>
+    <p class="ax-note" style="margin-top:2px">reps + how they felt — a structured RPE tap (principle #13). The full set-tracking view builds on the engine pass.</p>
+  </div>
+  </div>
+
+<div class="tabs">
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v4l2.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Today</span>
+        <span class="tab on"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 9V4h5M4 4l5 5M16 11v5h-5M16 16l-5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Log</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 16V9M10 16V4M16 16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Progress</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 17c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>You</span>
+      </div></div>
+<div class="r ax-fr" data-r="checkin" id="r-checkin">
+<div class="ax-wrap" id="ax-checkin">
+  <h1 class="ax-h1">Sunday check-in — 60 seconds</h1>
+  <div class="ax-card"><div class="lrow"><i style="background:#0FD2B1"></i><b>1</b> · Weigh-in <span class="amt">auto · scale</span></div>
+    <div class="ax-numrow" style="margin-top:6px"><input class="ax-input" id="ci-w" type="number" inputmode="decimal" placeholder="today's trend lb"><input class="ax-input" id="ci-rate" type="number" inputmode="decimal" step="0.05" placeholder="lb/wk" style="width:80px"></div>
+    <p class="ax-note" style="margin:4px 0 0"><a class="ax-glink" data-from="checkin">Protocol — how to weigh in →</a> · enter and the timeline re-learns — one honest number beats a perfect history.</p>
+    <span class="ax-greenpill" id="ci-updated" style="margin-top:6px;display:none">timeline updated</span></div>
+  <div class="ax-card" style="margin-top:10px"><div class="lrow"><i style="background:#0FD2B1"></i><b>2</b> · Training days <span class="amt">3 of 3 planned</span></div></div>
+  <div class="ax-card" style="margin-top:10px"><div class="lrow"><i style="background:#0FD2B1"></i><b>3</b> · Protein <span class="amt">0.73 g/lb avg (✓ target 0.7)</span></div>
+    <p class="ax-note" style="margin:2px 0 0"><b>Protein-first:</b> on GLP-1 this is the number that guards muscle.</p></div>
+  <div class="ax-card" style="margin-top:10px"><div class="ax-q"><b>4</b> · The week felt…</div>
+    <div class="ax-choices"><span class="ax-chip on">Great</span><span class="ax-chip">Rough</span></div></div>
+  <div class="ax-card" style="margin-top:12px;border-color:rgba(127,233,207,.35)">
+    <span class="ax-greenpill">timeline updated · ON TRACK</span>
+    <p class="ax-note" style="margin-top:8px;font-size:12.5px;color:#F1F3F5">“On track — one honest note: sleep is the lever dragging. Nothing else changed.”</p></div>
+  <p class="ax-note">Adherence-neutral: “rough” is data, not failure. Being observed daily is the attachment mechanism.</p>
+</div>
+<div class="tabs">
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v4l2.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Today</span>
+        <span class="tab on"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 9V4h5M4 4l5 5M16 11v5h-5M16 16l-5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Log</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 16V9M10 16V4M16 16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Progress</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 17c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>You</span>
+      </div></div>
+<div class="r ax-fr" data-r="progress" id="r-progress">
+<div class="ax-wrap" id="ax-progress">
+  <h1 class="ax-h1">Progress</h1>
+  <div class="ax-card">
+    <div class="ax-lrow"><span class="ax-q" style="margin:0">Band</span><span class="ax-eta">179.5 – 190.5 lb</span></div>
+    <svg viewBox="0 0 320 120" width="100%" height="86" style="margin-top:8px">
+      <rect x="4" y="46" width="312" height="46" rx="6" fill="#DCF7F0" opacity=".08" stroke="rgba(127,233,207,.16)"/>
+      <line x1="4" y1="69" x2="316" y2="69" stroke="#7FE9CF" stroke-dasharray="4 5" opacity=".55"/>
+      <polyline points="6,86 60,84 120,80 190,77 252,72 314,68" fill="none" stroke="#0FD2B1" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="314" cy="68" r="4.5" fill="#0FD2B1" stroke="#fff" stroke-width="1.4"/>
+      <text x="8" y="42" font-size="10" fill="#A6ACB3">190.5</text><text x="8" y="106" font-size="10" fill="#A6ACB3">179.5</text>
+    </svg>
+    <div class="ax-lrow" style="border:0"><span class="ax-note" style="margin:0">dashed = 185 · solid = trend</span><span class="amt">24 wk in</span></div>
+  </div>
+  <div class="ax-card" style="margin-top:10px"><div class="ax-q">The phases — cuts and planned breaks</div>
+    <div class="ax-phases" id="ax-phases"></div>
+    <p class="ax-note" id="ax-phnote"></p></div>
+  <div class="ax-card" style="margin-top:10px"><div class="ax-lrow"><span class="ax-q" style="margin:0">Then ⇄ now ⇄ dream</span><span class="amt">218 → 212.4 → 185</span></div>
+    <p class="ax-note" style="margin-top:4px">Origin-you is permanent — the day-0 photo never leaves.</p></div>
+  <div class="ax-card" style="margin-top:10px"><div class="ax-lrow"><b>Levers sandbox</b><span class="amt">what-if → apply</span></div>
+    <button class="ax-cta" id="ax-go-levers" style="margin-top:10px">Move the date</button></div>
+  <div class="ax-card" style="margin-top:10px"><div class="ax-lrow"><span class="ax-q" style="margin:0">Waist (tape) <a class="ax-glink" data-from="progress">how to →</a></span><span class="ax-eta" id="ax-waist-line">—</span></div>
+    <p class="ax-note" style="margin:2px 0 0">Measured from your baseline, double-measure protocol. The scale leads, the tape confirms shape, not just weight.</p></div>
+  <div class="ax-card" style="margin-top:10px;opacity:.85;"><div class="ax-lrow"><b>Sunday check-in</b><span class="amt">60 seconds</span></div>
+    <button class="ax-ghost" id="ax-go-checkin" style="margin-top:10px">Run this week's check-in</button></div>
+  <p class="ax-note" style="margin-top:12px">Future-state previews — <a id="ax-go-alarm" style="color:#F2C057;font-weight:700;text-decoration:none">drift alarm</a> · <a id="ax-go-maint" style="color:#7FE9CF;font-weight:700;text-decoration:none">maintenance era →</a></p>
+</div>
+<div class="tabs">
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v4l2.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Today</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 9V4h5M4 4l5 5M16 11v5h-5M16 16l-5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Log</span>
+        <span class="tab on"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 16V9M10 16V4M16 16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Progress</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 17c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>You</span>
+      </div></div>
+<div class="r ax-fr" data-r="alarm" id="r-alarm">
+<div class="ax-wrap" id="ax-alarm">
+  <h1 class="ax-h1" style="color:#F2C057">drift detected — normal</h1>
+  <div class="ax-card ax-amber">
+    <div class="ax-lrow"><span class="ax-q" style="margin:0">Trend</span><span class="ax-eta" style="color:#8A5A0A">192.8 lb · 9 days outside the band</span></div>
+    <p class="ax-note" style="color:#4A3007">You're up 0.6 lb/wk for three weeks. Here's the fix — small, boring, over fast.</p>
+  </div>
+  <div class="ax-card ax-amber" style="margin-top:10px">
+    <div class="ax-q">The 3-week fix</div>
+    <div class="ax-lrow"><span>−190 kcal/day</span><span class="amt">ends Nov 14</span></div>
+    <p class="ax-note" style="color:#4A3007">Target: band center. <b>Never a big re-cut — that's the yo-yo we exist to prevent.</b></p>
+    <div class="ax-choices" style="margin-top:10px">
+      <span class="ax-chip on" style="background:#4A3007;color:#F7EBD4;border-color:#E8C77E">Run it</span>
+      <span class="ax-chip">Snooze 2 wk</span>
+      <span class="ax-chip">Move my band</span></div>
+  </div>
+  <div class="ax-card" style="margin-top:12px"><div class="ax-q">consistency alarm · variant</div>
+    <p class="ax-note" style="font-size:12.5px;color:#F1F3F5">“10 days quiet — the scale isn't judging you. We just can't see the road.”</p>
+    <p class="ax-note">Fires independent of weight — silence itself is the leading indicator of regain.</p></div>
+  <button class="ax-ghost" id="ax-alarm-back" style="margin-top:12px">← back to Progress</button>
+  <p class="ax-note" style="margin-top:8px">Two-tier, hysteresis-protected, trend-driven. No shame copy, ever.</p>
+</div>
+<div class="tabs">
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v4l2.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Today</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 9V4h5M4 4l5 5M16 11v5h-5M16 16l-5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Log</span>
+        <span class="tab on"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 16V9M10 16V4M16 16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Progress</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 17c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>You</span>
+      </div></div>
+<div class="r ax-fr" data-r="maint" id="r-maint">
+<div class="ax-wrap" id="ax-maint">
+  <h1 class="ax-h1">Maintenance era</h1>
+  <div class="ax-card">
+    <span class="ax-greenpill">maintain · green</span>
+    <div class="ax-lrow"><span class="ax-eta" style="font-size:22px;color:#7FE9CF">31 weeks in band</span><span class="amt">lifetime 87%</span></div>
+    <svg viewBox="0 0 320 110" width="100%" height="80" style="margin-top:6px">
+      <rect x="4" y="34" width="312" height="42" rx="6" fill="#DCF7F0" opacity=".09" stroke="rgba(127,233,207,.16)"/>
+      <line x1="4" y1="55" x2="316" y2="55" stroke="#7FE9CF" stroke-dasharray="4 5" opacity=".55"/>
+      <polyline points="6,64 70,58 140,52 210,56 260,50 314,53" fill="none" stroke="#0FD2B1" stroke-width="2.5" stroke-linecap="round"/>
+      <text x="8" y="30" font-size="10" fill="#A6ACB3">190.5</text><text x="8" y="92" font-size="10" fill="#A6ACB3">179.5</text>
+    </svg>
+    <div class="ax-lrow" style="border:0"><span class="ax-note" style="margin:0">dashed = 185 · solid = trend</span><span class="amt">31 wk</span></div>
+  </div>
+  <div class="ax-card" style="margin-top:10px"><div class="ax-lrow"><span class="ax-q" style="margin:0">Drift velocity</span><span class="ax-eta">−0.1 lb/wk in-band ✓</span></div>
+    <p class="ax-note" style="margin-top:2px"><b>GREEN — nothing to do</b> · check-in ≤ 7d ✓</p></div>
+  <p class="ax-note">Silence is the product. The number worth celebrating is weeks in band — it only ever accumulates.</p>
+  <div class="ax-card" style="margin-top:10px;border-color:rgba(127,233,207,.35)"><div class="ax-q">You made it a year</div>
+    <span class="ax-chip on">Maintenance rate −40% · lifetime option</span>
+    <p class="ax-note">The commercial moment arrives <b>at the band</b>, not the churn cliff.</p></div>
+  <p class="ax-note" style="margin-top:10px">“Then ⇄ now ⇄ dream” stays on this screen — origin-you is permanent.</p>
+  <button class="ax-ghost" id="ax-maint-back" style="margin-top:8px">← back to Progress</button>
+</div>
+<div class="tabs">
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v4l2.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Today</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 9V4h5M4 4l5 5M16 11v5h-5M16 16l-5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Log</span>
+        <span class="tab on"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 16V9M10 16V4M16 16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Progress</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 17c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>You</span>
+      </div></div>
+<div class="r ax-fr" data-r="levers" id="r-levers">
+<div class="ax-wrap" id="ax-levers">
+  <h1 class="ax-h1">Move the date</h1>
+  <p class="ax-sub">The timeline is a live model. Drag a lever, watch the arrival band move. Unsafe levers stay visible but disabled, with the reason.</p>
+  <div class="ax-card">
+    <div class="ax-lrow"><span class="ax-q" style="margin:0">Workouts / week</span><span class="ax-eta" id="lv-w">3</span></div>
+    <input class="ax-slider" id="sl-w" type="range" min="1" max="5" step="1" value="3">
+    <div class="ax-lrow" style="margin-top:8px"><span class="ax-q" style="margin:0">Sleep</span><span class="ax-eta" id="lv-s">7.0 h</span></div>
+    <input class="ax-slider" id="sl-s" type="range" min="5.5" max="9" step="0.5" value="7">
+    <div class="ax-lrow" style="margin-top:8px"><span class="ax-q" style="margin:0">Food style</span><span class="ax-eta" id="lv-f">flexible</span></div>
+    <input class="ax-slider" id="sl-f" type="range" min="0" max="2" step="1" value="0">
+    <div class="ax-lrow" style="margin-top:8px"><span class="ax-q" style="margin:0">Loss rate</span><span class="ax-eta" id="lv-r">0.75 lb/wk</span></div>
+    <input class="ax-slider" id="sl-r" type="range" min="0.25" max="1" step="0.05" value="0.75">
+  </div>
+  <div class="ax-card ax-disabled" style="margin-top:10px"><div class="ax-lrow"><span class="ax-q" style="margin:0">1.8 lb/wk</span><span class="amt">disabled</span></div>
+    <p class="ax-note" style="margin-top:2px">your safe floor is ~1% bodyweight/week</p></div>
+  <div class="ax-card" style="margin-top:10px;border-color:rgba(127,233,207,.35)">
+    <div class="ax-lrow"><span class="ax-q" style="margin:0">Arrival at this pace</span><span class="ax-eta" id="lv-eta">—</span></div>
+    <p class="ax-note" id="lv-eta-note" style="margin-top:2px"></p>
+    <div class="ax-lrow"><span class="ax-q" style="margin:0">The wedding</span><span class="ax-eta" id="lv-event">—</span></div>
+    <p class="ax-note" id="lv-event-note" style="margin-top:2px"></p>
+  </div>
+  <p class="ax-note" style="margin-top:10px">Tradeoffs exposed, no magic promised — <b>you own the plan you end up with.</b></p>
+  <button class="ax-cta" id="ax-apply" style="margin-top:10px">Apply to my plan</button>
+</div>
+<div class="tabs">
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v4l2.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Today</span>
+        <span class="tab on"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 9V4h5M4 4l5 5M16 11v5h-5M16 16l-5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Log</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 16V9M10 16V4M16 16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Progress</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 17c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>You</span>
+      </div></div>
+<div class="r ax-fr" data-r="plan" id="r-plan">
+  <div class="ax-wrap" id="ax-plan">
+    <h1 class="ax-h1">Create your week</h1>
+    <p class="ax-sub">The trainer builds the week around your life — injuries off-limits, one minute. Everything below regenerates from your picks.</p>
+    <div class="ax-card"><div class="ax-q">Days I'll actually train</div>
+      <div class="ax-choices" id="pl-days"><span class="ax-chip">2</span><span class="ax-chip on">3</span><span class="ax-chip">4</span></div></div>
+    <div class="ax-card" style="margin-top:10px"><div class="ax-q">What it's for</div>
+      <div class="ax-choices"><span class="ax-chip on">Strength + recomp</span><span class="ax-chip">Conditioning</span></div>
+      <p class="ax-note"><b>Protein-first engine note:</b> strength work is the muscle-preservation lever while the scale moves — it feeds the scorer.</p></div>
+    <div class="ax-card" style="margin-top:10px"><div class="ax-q">Off-limits / niggles</div>
+      <div class="ax-choices" id="pl-inj"><span class="ax-chip">Shoulder (L)</span><span class="ax-chip">Low back</span><span class="ax-chip">Knees</span></div>
+      <p class="ax-note" id="pl-sub">Flag one and the swap shows inline with the reason.</p></div>
+    <div id="ax-sessions" style="margin-top:12px"></div>
+    <div class="ax-card" style="margin-top:12px;border-color:rgba(127,233,207,.35)">
+      <div class="ax-q">Log a session (voice)</div>
+      <div class="ax-q logme" style="margin:0;font-size:12.5px">◉ “5×5 squats … felt strong” — tap to parse</div>
+      <div class="ax-rpe" style="margin-top:8px"><span class="ax-subtag" style="margin-right:6px">RPE</span><i>7</i><i>8</i><i>9</i></div>
+      <div id="ax-wlog-done" style="display:none"><span class="ax-greenpill" style="margin-top:8px;display:inline-block">session logged · strength trend +1</span></div>
+    </div>
+    <button class="ax-cta" id="ax-plan-back" style="margin-top:12px">Ship it — back to Today</button>
+  </div>
+
+<div class="tabs">
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v4l2.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Today</span>
+        <span class="tab on"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 9V4h5M4 4l5 5M16 11v5h-5M16 16l-5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Log</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 16V9M10 16V4M16 16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Progress</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 17c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>You</span>
+      </div></div>
+<div class="r ax-fr" data-r="you" id="r-you">
+<div class="ax-wrap" id="ax-you">
+  <h1 class="ax-h1">You</h1>
+  <div class="ax-card"><div class="ax-q">Coach voice — your dial, your call</div>
+    <div class="ax-choices" id="ax-dial"><span class="ax-chip">gentle</span><span class="ax-chip on">neutral</span><span class="ax-chip">sassy</span></div>
+    <p class="ax-note" id="ax-dial-line" style="margin-top:8px;font-size:12.5px;color:#F1F3F5">“Protein held through the travel week. I arrive on the later side of the band at this pace.”</p>
+    <p class="ax-note">The sass lane roasts <b>the timeline, the dates, the clothes</b> — never the body. Ever.</p></div>
+  <div class="ax-card" style="margin-top:10px"><div class="ax-lrow"><b>GLP-1 · protein-first mode</b><span class="amt">off (tap to preview)</span></div>
+    <p class="ax-note" style="margin-top:4px">Protein + strength-trend hero; the scorer becomes your wedge view. (Beachhead cohorts — decision ② in.)</p></div>
+  <div class="ax-card" style="margin-top:10px"><div class="ax-q">Avatar privacy tier</div>
+    <div class="ax-choices"><span class="ax-chip on">photoreal (face-locked)</span><span class="ax-chip">stylized</span></div>
+    <p class="ax-note">Your choice, not a global call. Unlock mechanics (milestone / paywall) = decision ④ — real-build territory, not specced in this mock.</p></div>
+  <div class="ax-card" style="margin-top:10px"><div class="lrow"><i style="background:#0FD2B1"></i>Day 0 · the origin photo <span class="amt">never leaves</span></div></div>
+  <button class="ax-ghost" id="ax-you-back" style="margin-top:10px">← back</button>
+</div>
+<div class="tabs">
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v4l2.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Today</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 9V4h5M4 4l5 5M16 11v5h-5M16 16l-5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Log</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 16V9M10 16V4M16 16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Progress</span>
+        <span class="tab on"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 17c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>You</span>
+      </div></div>
+<div class="r ax-fr" data-r="guide" id="r-guide">
+  <div class="ax-wrap" id="ax-guide">
+    <h1 class="ax-h1">How to take your measurements</h1>
+    <p class="ax-sub">The whole point: <b style="color:#7FE9CF">same way, every time</b>. Consistency reads trends; variation only reads noise.</p>
+    <div class="ax-card"><div class="ax-q">⚖️ The weigh-in</div>
+      <div class="lrow"><i style="background:#0FD2B1"></i>Morning — right after the bathroom, before coffee or food <span class="amt">1</span></div>
+      <div class="lrow"><i style="background:#0FD2B1"></i>Same scale, same hard floor (never carpet — it tilts readings) <span class="amt">2</span></div>
+      <div class="lrow"><i style="background:#0FD2B1"></i>Minimal clothing, the same amount every time <span class="amt">3</span></div>
+      <div class="lrow" style="border-bottom:0"><i style="background:#0FD2B1"></i>Enter it, then let it go <span class="amt">4</span></div>
+      <p class="ax-note">One day is noise. <b>The app reads the 7-day trend</b> — a jump after a salty dinner is water, not fat. You weigh, the app watches.</p>
+    </div>
+    <div class="ax-card" style="margin-top:10px"><div class="ax-q">📏 The tape</div>
+      <div class="lrow"><i style="background:#0FD2B1"></i>Soft tape, pulled snug — <b>never pressing in</b>, parallel to the floor all the way around <span class="amt">1</span></div>
+      <div class="lrow"><i style="background:#0FD2B1"></i>Waist: at the navel, relaxed, <b>at the end of a normal exhale</b> — never sucked in <span class="amt">2</span></div>
+      <div class="lrow"><i style="background:#0FD2B1"></i>Same anatomical spot every time — mark it with a pen the first week <span class="amt">3</span></div>
+      <div class="lrow" style="border-bottom:0"><i style="background:#0FD2B1"></i>Measure twice; more than 2cm apart = re-measure <span class="amt">4</span></div>
+      <div class="ax-choices" style="margin-top:10px">
+        <span class="ax-chip">Neck · just under the larynx</span>
+        <span class="ax-chip">Hip · widest over the glutes</span>
+        <span class="ax-chip">Thigh · mid hip-to-knee</span>
+        <span class="ax-chip">Arm · mid shoulder-to-elbow, same flex state</span></div>
+      <p class="ax-note">The scale leads, the tape confirms <b>shape</b> — muscle moving while weight stalls is exactly what the tape is for.</p>
+    </div>
+    <div class="ax-card" style="margin-top:10px"><div class="ax-q">📷 The photos</div>
+      <div class="lrow"><i style="background:#0FD2B1"></i>Same spot, same daylight, plain background — phone at chest height or propped, not hand-held angles <span class="amt">1</span></div>
+      <div class="lrow"><i style="background:#0FD2B1"></i>Front · side · back · ¾ — arms slightly away from the body, natural stance <span class="amt">2</span></div>
+      <div class="lrow" style="border-bottom:0"><i style="background:#0FD2B1"></i>Morning, minimal clothing, the same clothes each time <span class="amt">3</span></div>
+      <p class="ax-note">No posing, no filter, no crop — <b>the app reads shape honestly</b>, so the baseline has to be honest.</p>
+    </div>
+    <div class="ax-card" style="margin-top:10px"><div class="ax-q">The triangle</div>
+      <p class="ax-note" style="margin-top:2px;font-size:12.5px;color:#F1F3F5">Scale (trend) + tape (shape) + photos (the look) — <b>three honest instruments</b>. If weight stalls but the waist drops and the photos change, that's progress the scale can't say.</p>
+      <p class="ax-note">Want the gold standard? A DEXA scan ~once a quarter measures fat vs lean directly — optional, worth it once or twice a year.</p>
+    </div>
+    <button class="ax-cta" id="ax-guide-back" style="margin-top:12px">Got it — back</button>
+  </div>
+</div>
+<div class="r scr-dream" data-r="dream" id="r-dream"><div class="cell">
+  <div class="phone"><div class="island"></div><div class="screen">
+<div class="stage" style="bottom:192px"><div class="floor" style="width:360px;height:300px;bottom:24px"></div><div class="appbar"><span class="p-mark">‹ <span class="lg">Build the future you</span></span><span class="p-phase">day 0</span></div><div class="event-pill">Event · <b>wedding — Jun 14</b> · 33 wk</div><div class="duo-clip"><img style="clip-path:inset(0 50% 0 0)" src="img/today.jpg" alt=""></div><div class="duo-clip d"><img style="clip-path:inset(0 0 0 50%)" src="img/dream-body.jpg" alt=""></div><div class="duo-panel"></div><div class="duo-seam" style="left:50%"><span class="duo-knob">⇄ 27.4 lb</span></div><div class="duo-tag" style="left:16px">today<b>212.4</b></div><div class="duo-tag" style="right:16px;color:#7FE9CF;border-color:#B4EDE0">dream<b>185</b></div><div class="floor-shadow" style="width:300px;height:30px;top:428px"></div><div class="trainer-line" style="top:448px"><p><span class="gl">✦</span> I'm the you that fits the dress. Hold on — we walk there.</p><small>revealed now, day 0 — your face carries over</small></div><div class="wardrobe" style="top:486px"><span class="sw on">the jeans · target</span><span class="sw">wedding guest</span><span class="sw">gym kit</span></div><div class="scrub" style="top:526px"><div class="rail"><span class="seg then-now"></span><span class="seg now-dream"></span><span class="node t0"><div class="nm">then</div><span class="wt">218</span><span class="dot off"></span></span><span class="node t1"><div class="nm">now</div><span class="wt">212.4</span><span class="dot off"></span></span><span class="node t2 on"><div class="nm">dream</div><span class="wt">185</span><span class="dot"></span></span></div></div></div>
+      <div class="sheet down" id="dsheet"><div class="handle"></div>
+<div class="sh-row"><div><div class="sh-t">Target stats — drag the sheet up</div><div class="sh-s">185 ±3% · 15% bf · the build tools inside</div></div><div class="deckdots"><i class="on"></i><i></i><i></i><i></i></div></div>
+<div class="handle"></div>
+        <div class="sh-head"><b>Build the dream</b><span>day 0 · revealed</span></div>
+        <div class="deck">
+          <div class="tcard">
+            <h4>Target stats</h4>
+            <div class="bstat"><span class="k">Goal weight</span><span class="v">185 <i>±3% → 179.5–190.5</i></span></div>
+            <div class="bstat"><span class="k">Body-fat target</span><span class="v">15% <i>(13–17 ok)</i></span></div>
+            <div class="bstat"><span class="k">At the event</span><span class="v">199 <i>±4.6 · 80%</i></span></div>
+          </div>
+          <div class="tcard">
+            <h4>The look</h4>
+            <div class="bstat"><span class="k">Old photo — "this was me"</span><span class="v" style="color:#7FE9CF">＋ remembered</span></div>
+            <div class="bstat"><span class="k">Live poses</span><span class="v">5 verified ✓</span></div>
+            <div class="micro">Numbers + live photos build the body; the old photo sets the look. Your face carries over.</div>
+          </div>
+          <div class="tcard">
+            <h4>Origin-you</h4>
+            <div class="bignum" style="font-size:17px">then ⇄ now ⇄ dream</div>
+            <div class="micro">218 → 212.4 → 185 · permanent. Progress visible both directions, all the way up.</div>
+          </div>
+          <div class="tcard" style="padding:13px 13px 11px">
+            <button class="vbtn">That's the plan</button>
+            <button class="gbtn">Adjust the dream</button>
+          </div>
+        </div>
+        <div class="footdots"><i class="on"></i><i></i><i></i><i></i></div>
+      </div>
+<div class="tabs">
+        <span class="tab on"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v4l2.5 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Today</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 9V4h5M4 4l5 5M16 11v5h-5M16 16l-5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Log</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M4 16V9M10 16V4M16 16v-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Progress</span>
+        <span class="tab"><svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="6.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 17c1-3.5 3.5-5 6.5-5s5.5 1.5 6.5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>You</span>
+      </div></div></div></div>
+</div>
+<script>
+  (function(){
+    var grabbed=null;
+    document.querySelectorAll('.avatar-inner').forEach(function(fig){
+      fig.addEventListener('pointerdown', function(e){ grabbed=fig; fig._sx=e.clientX; fig.classList.add('grab'); });
+    });
+    window.addEventListener('pointermove', function(e){
+      if (!grabbed) return;
+      grabbed.style.transform = 'rotateY(' + ((e.clientX - grabbed._sx) * 0.4) + 'deg)';
+    });
+    window.addEventListener('pointerup', function(){
+      if (grabbed) { grabbed.classList.remove('grab'); grabbed=null; }
+    });
+    // iOS: scroll gestures steal the pointer — release so a stuck grab can't glitch every scroll
+    window.addEventListener('pointercancel', function(){
+      if (grabbed) { grabbed.classList.remove('grab'); grabbed=null; }
+    });
+
+    // scrub stops swap the REAL PHOTO (then = muted, now = today, dream = the dream body)
+    var SRC = { t0: ['img/today.jpg', 'saturate(.5) contrast(.96)'],
+                t1: ['img/today.jpg', ''],
+                t2: ['img/dream-body.jpg', ''] };
+    document.querySelectorAll('.node').forEach(function(n){
+      n.addEventListener('click', function(){
+        var screen = n.closest('.screen'); if (!screen) return;
+        var img = screen.querySelector('.avatar-photo, .stage-fig img');
+        var key = n.classList.contains('t0') ? 't0' : n.classList.contains('t2') ? 't2' : 't1';
+        if (img) { img.src = SRC[key][0]; img.style.filter = SRC[key][1]; }
+        screen.querySelectorAll('.node').forEach(function(x){ x.classList.remove('on'); });
+        n.classList.add('on');
+      });
+    });
+  })();
+</script>
+<script>
+  (function(){
+    document.querySelectorAll('.screen').forEach(function(s){
+      var seam = s.querySelector('.duo-seam'); if (!seam) return;
+      var l = s.querySelector('.duo-clip:not(.d)'), r = s.querySelector('.duo-clip.d');
+      var lImg = l.querySelector('img'), rImg = r.querySelector('img');
+      function set(px){
+        var w = s.getBoundingClientRect().width;
+        var pct = Math.max(22, Math.min(78, px / w * 100));
+        lImg.style.clipPath = 'inset(0 ' + (100 - pct) + '% 0 0)';
+        rImg.style.clipPath = 'inset(0 0 0 ' + pct + '%)';
+        seam.style.left = pct + '%';
+      }
+      var drag = false;
+      seam.addEventListener('pointerdown', function(e){ drag = true; e.preventDefault(); });
+      window.addEventListener('pointermove', function(e){ if (drag) set(e.clientX - s.getBoundingClientRect().left); });
+      window.addEventListener('pointerup', function(){ drag = false; });
+      // timeline stops: jump-cut the stage to that you
+      s.querySelectorAll('.node').forEach(function(n){
+        n.addEventListener('click', function(){
+          var key = n.classList.contains('t2') ? 'dream' : 'today';
+          if (key === 'dream') { lImg.style.clipPath='inset(0 100% 0 0)'; rImg.style.clipPath='inset(0 0 0 0)'; seam.style.left='0%'; }
+          else { lImg.style.clipPath='inset(0 0 0 0)'; rImg.style.clipPath='inset(0 100% 0 0)'; seam.style.left='100%'; lImg.style.filter = key==='then' ? 'saturate(.5)' : ''; }
+          s.querySelectorAll('.node').forEach(function(x){ x.classList.remove('on'); });
+          n.classList.add('on');
+        });
+      });
+    });
+  })();
+</script>
+
+<script>(function(){
+  function $id(x){ return document.getElementById(x); }
+  function qs(s,r){ return (r||document).querySelectorAll(s); }
+  function el(s,r){ return (r||document).querySelector(s); }
+
+  /* ---------- profile store (device-local only) ---------- */
+  var KEY='yt-profile-v1';
+  var P = null;
+  try { P = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch(e){}
+  if (!P) P = null;
+  function save(){ if (P) localStorage.setItem(KEY, JSON.stringify(P)); }
+  window.__ytprof = {
+    load: function(){ return P; },
+    set: function(patch){ 
+      if (!P){ P = { created: new Date().toISOString() }; }
+      for (var k in patch) P[k] = patch[k];
+      save(); return P;
+    },
+    exists: function(){ return !!P; },
+    save: save,
+    wipe: function(){ try{ localStorage.removeItem(KEY); }catch(e){} P=null;
+      if (window.__ytdb) window.__ytdb.clearAll(); }
+  };
+
+  /* ---------- photo blobs: IndexedDB (device-local) ---------- */
+  var DB = { db: null };
+  function openDb(cb){
+    var rq = indexedDB.open('yt-photos-v1', 1);
+    rq.onupgradeneeded = function(e){ e.target.result.createObjectStore('shots'); };
+    rq.onsuccess = function(e){ DB.db = e.target.result; DB.flush&&DB.flush(); cb&&cb(); };
+    rq.onerror = function(){ cb&&cb(); };
+  }
+  openDb(function(){ /* db opened lazily-early */ });  // boot: photos DB ready before captures use it
+  DB.pending = [];
+  DB.put = function(key, blob){ if(!DB.db){ DB.pending.push(['put', key, blob]); return; }
+    var t=DB.db.transaction('shots','readwrite');
+    t.objectStore('shots').put(blob, key); };
+  DB.get = function(key, cb){ if(!DB.db){ DB.pending.push(['get', key, cb]); return; }
+    var rq = DB.db.transaction('shots').objectStore('shots').get(key);
+    rq.onsuccess = function(){ cb(rq.result); }; rq.onerror = function(){ cb(null); }; };
+  DB.flush = function(){ var q = DB.pending.slice(); DB.pending = [];
+    q.forEach(function(item){ if (item[0] === 'put') DB.put(item[1], item[2]); else DB.get(item[1], item[2]); }); };
+  DB.clearAll = function(){ if(!DB.db) return; var t=DB.db.transaction('shots','readwrite');
+    t.objectStore('shots').clear(); };
+
+  function showBlob(id, blob){
+    var slot = document.querySelector('.ax-pose[data-slot="'+id+'"]');
+    if (!slot) return;
+    if (slot.querySelector('img')) slot.querySelector('img').src = URL.createObjectURL(blob);
+    else { var im = document.createElement('img'); im.src = URL.createObjectURL(blob); slot.insertBefore(im, slot.firstChild); }
+    slot.classList.add('has');
+  }
+  function readSlot(key, id){ DB.get(key, function(b){ if(b) showBlob(id, b); }); }
+
+  /* ---------- pose capture wiring ---------- */
+  var SLOTS = { front:'shot-front', side:'shot-side', back:'shot-back',
+                threequarters:'shot-34', look:'shot-look' };
+  Object.keys(SLOTS).forEach(function(id){
+    var key = SLOTS[id];
+    var slot = document.querySelector('.ax-pose[data-slot="'+id+'"]');
+    if (!slot) return;
+    var input = document.createElement('input');
+    input.type='file'; input.accept='image/*';
+    input.capture = 'environment';
+    input.style.cssText='position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;';
+    slot.appendChild(input);
+    input.addEventListener('change', function(){
+      var f = input.files && input.files[0];
+      if (!f) return;
+      DB.put(key, f);
+      showBlob(id, f);
+      if (window.__ytrecalc) window.__ytrecalc();
+      toast('Saved on this device only');
+    });
+    // restore prior shot
+    readSlot(key, id);
+  });
+
+  /* ---------- quiz chips (safe-start) persist their picks ---------- */
+  var QUIZMAP = {
+    'ax-q-1':'deliberate', 'ax-q-2':'swings', 'ax-q-3':'foodHard'
+  };
+  Array.from(qs('#ax-on .ax-card')).forEach(function(card){
+    var chips = card.querySelectorAll('.ax-chip');
+    if (chips.length && card.previousElementSibling) {}
+    chips.forEach(function(ch){
+      ch.addEventListener('click', function(){
+        if (card.parentElement.id === 'ax-on' || card.closest('#ax-on')){
+          chips.forEach(function(x){ x.classList.remove('on'); });
+          ch.classList.add('on');
+        }
+      });
+    });
+  });
+
+  /* ---------- onboarding inputs ---------- */
+  var w0 = $id('on-w0'), goal = $id('on-goal'), waist = $id('on-waist');
+  var evName = $id('on-event-name'), evDate = $id('on-event-date');
+  function hydrate(){
+    if (!P) return;
+    if (w0)  { if (P.weightNow) { w0.value = P.weightNow; } }
+    if (goal){ if (P.goal) { goal.value = P.goal; } }
+    if (waist){ if (P.waist) waist.value = P.waist; }
+    if (evName && P.event) { evName.value = P.event.name || ''; }
+    if (evDate && P.event && P.event.date) { evDate.value = P.event.date; }
+    if (P.glp1 && $id('on-glp-chip')) $id('on-glp-chip').classList.add('on');
+  }
+  hydrate();
+
+  function commit(onDone){
+    var patch = {};
+    if (w0 && +w0.value) patch.weightNow = +w0.value;
+    if (goal && +goal.value) patch.goal = +goal.value;
+    if (waist && +waist.value) patch.waist = +waist.value;
+    if (evName) patch.event = { name: evName.value || null, date: evDate.value || null };
+    if ($id('on-glp-chip')) patch.glp1 = $id('on-glp-chip').classList.contains('on');
+    Object.keys(SLOTS).forEach(function(id){
+      var slot = document.querySelector('.ax-pose[data-slot="'+id+'"]');
+      if (slot && slot.classList.contains('has')) patch['shot_'+SLOTS[id]] = true;
+    });
+    if (P || Object.keys(patch).length){
+      window.__ytprof.set(patch);
+      try { if (window.__ytrecalc) window.__ytrecalc(); } catch(e) { window.__ytCommitErr = String(e); }
+      if ($id('on-band') && P && P.goal) $id('on-band').textContent = bandTxt(P.goal);
+    }
+    if (onDone) onDone();
+  }
+  [w0, goal, waist, evName, evDate].forEach(function(inp){
+    if (inp) inp.addEventListener('input', commit);
+  });
+  var glpRow = $id('on-glp-row');
+  if (glpRow) glpRow.addEventListener('click', function(){
+    var ch = $id('on-glp-chip'); if(!ch) return;
+    ch.classList.toggle('on'); commit();
+  });
+  var sug = $id('on-suggest');
+  if (sug) sug.addEventListener('click', function(){
+    var w = w0 ? +w0.value : 218;
+    if (!w) { toast('weigh-in first — then I can suggest'); return; }
+    goal.value = Math.round(w * 0.82 * 2) / 2;
+    // 0.82×current lands the big-safe zone; user keeps the final word
+    commit();
+    toast('suggestion set — yours to edit');
+  });
+  suggestHook = null;
+
+  /* ---------- band display ---------- */
+  function bandTxt(g){ var lo = (g*0.97).toFixed(1), hi=(g*1.03).toFixed(1); return lo+'–'+hi+' lb'; }
+  var bandEl = $id('on-band');
+  if (bandEl) bandEl.textContent = bandTxt(P && P.goal ? P.goal : 185);
+
+  /* ---------- export / import (You) ---------- */
+  var expB = $id('yt-export');
+  if (expB) expB.addEventListener('click', function(){
+    var out = P ? JSON.stringify(P, null, 2) : '{}';
+    var w = window.open('', '_blank');
+    if (w) { w.document.body.style.cssText='background:#083243;color:#F1F3F5;font-family:-apple-system,monospace;padding:20px;white-space:pre-wrap;'; w.document.title='yt-profile';
+      w.document.body.textContent = out; }
+    toast('profile JSON — copy it out from there');
+  });
+
+  /* finish button commits */
+  var fin = $id('on-finish');
+  if (fin) fin.addEventListener('click', function(){ commit();
+    window.__ytprof.set({ onboarded: true });
+    toast('baseline stored on this device'); });
+
+  /* expose for the engine */
+  window.__ytdb = DB;
+  window.__ytshowBlob = showBlob;
+  window.__ytbandTxt = bandTxt;
+  /* engine + home hydration now that the profile is available */
+  if (window.__ytrecalc) window.__ytrecalc();
+
+  /* first-launch routing (deferred until the profile exists): completed profile + no deep link -> home */
+  try {
+    var __rl = { hash: location.hash, exists: window.__ytprof.exists(), ob: window.__ytprof.load().onboarded, gotype: typeof go };
+    if (!location.hash && __rl.exists && __rl.ob && __rl.gotype === 'function') go('home');
+    window.__rlWhy = JSON.stringify(__rl);
+  } catch(rlE) { window.__rlWhy = String(rlE); }
+})();</script>
+<script>
+/* ===== router + wiring ===== */
+function go(name){
+  document.querySelectorAll('.r').forEach(function(r){
+    r.classList.toggle('active', r.dataset.r===name);
+  });
+  if(('#/'+name)!==location.hash) history.replaceState&&history.replaceState(null,'','#/'+name);
+  window.scrollTo(0,0);
+}
+var toastDiv=document.createElement('div'); toastDiv.className='ax-toast'; toastDiv.id='axtoast';
+document.body.appendChild(toastDiv);
+function toast(t){ var el=toastDiv; el.textContent=t; el.classList.add('on');
+  clearTimeout(el._t); el._t=setTimeout(function(){el.classList.remove('on');},1600); }
+var TABLIST=[['Today','home'],['Log','log'],['Progress','progress'],['You','you']];
+function wire(root){
+  var tabs=root.querySelectorAll('.tabs .tab');
+  tabs.forEach(function(tb){
+    var label=tb.textContent.trim(); var r=null;
+    for (var i=0;i<TABLIST.length;i++){ if (label.indexOf(TABLIST[i][0])>=0) r=TABLIST[i][1]; }
+    if(!r) return;
+    tb.addEventListener('click', function(){ go(r); });
+  });
+}
+[document.getElementById('r-home'),document.getElementById('r-dream')].forEach(function(el){ if(el) wire(el); });
+/* sheet toggles: real drag + tap (phone-first) */
+var __dragSheet = function(sheet){
+  if (!sheet) return;
+  var phone = sheet.closest('.phone');
+  var targets = [sheet.querySelector('.handle'), sheet.querySelector('.sh-row'), sheet.querySelector('.sh-head')].filter(Boolean);
+  var down = false, y0 = 0, t0 = 0;
+  function cur(){ return sheet.classList.contains('up'); }
+  function setTo(up){
+    sheet.classList.toggle('up', up); sheet.classList.toggle('down', !up);
+    if (phone) phone.classList.toggle('st-up', up);
+  }
+  function pd(e){
+    if (!targets.some(function(t){ return t === e.target || t.contains(e.target); })) return;
+    down = true; y0 = e.clientY; t0 = Date.now();
+    try { e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); } catch(err){}
+  }
+  function release(e){
+    if (!down) return;
+    down = false;
+    var dy = y0 - e.clientY;                // up-drag = positive
+    var moved = Math.abs(dy) > 14 || (Date.now() - t0) > 600;
+    if (!moved){ setTo(!cur()); return; }   // tap toggles
+    var wantUp = dy > 0 ? true : (dy < 0 ? false : cur());
+    if (wantUp !== cur()) setTo(wantUp);
+  }
+  targets.forEach(function(t){
+    t.style.touchAction = 'none';
+    t.addEventListener('pointerdown', pd);
+    t.addEventListener('pointerup', release);
+    t.addEventListener('pointercancel', function(){ down = false; });
+  });
+};
+__dragSheet(document.getElementById('hsheet'));
+__dragSheet(document.getElementById('dsheet'));
+
+/* doors + chips */
+document.querySelectorAll('#r-home .tcard.plan-door').forEach(function(c){
+  c.addEventListener('click', function(){ go('plan'); toast('The plan builder — 1 minute, injuries off-limits'); }); });
+document.querySelectorAll('#r-home .tcard.action-card').forEach(function(c){
+  c.addEventListener('click', function(){ go('log'); toast('Log it — photo or voice'); }); });
+document.querySelectorAll('#r-home .ab-chip, #r-home .node.t2').forEach(function(el){
+  el.addEventListener('click', function(){ setTimeout(function(){ go('dream'); }, 260); }); });
+document.addEventListener('click', function(e){
+  var w=e.target.closest('.w-btn');
+  if(w) toast('Wardrobe — build pass 2');
+});
+var startM=location.hash.match(/#\/([a-z]+)/);
+/* first launch: no completed profile -> onboarding; deep links still honored */
+var onboarded = window.__ytprof && window.__ytprof.exists() && window.__ytprof.load().onboarded;
+go(startM && document.getElementById('r-'+startM[1]) ? startM[1] : (onboarded ? 'home' : 'on'));
+</script>
+
+<script>(function(){
+  function $id(x){ return document.getElementById(x); }
+  function qs(s, root){ return (root||document).querySelectorAll(s); }
+  function el(s, root){ return (root||document).querySelector(s); }
+  function prof(){ return window.__ytprof ? window.__ytprof.load() : null; }
+
+  /* bind the tab bars on every route (home+dream are pre-wired by the router block) */
+  document.querySelectorAll('.r').forEach(function(rx){ if (rx.querySelector('.tabs')) wire(rx); });
+
+  /* ===== honest-ETA engine (one source of truth; profile-aware) ===== */
+  var NOW = new Date(2026, 10, 2);           // mock "today" of the persona
+  var WEDDING = new Date(2027, 5, 14);      // Jun 14 2027
+  var DIST = 212.4 - 185;
+  function distOf(){
+    var P = prof();
+    if (P && P.weightNow && P.goal) return Math.max(0, P.weightNow - P.goal);
+    return DIST;
+  }
+  function eventDate(){
+    var P = prof();
+    if (P && P.event && P.event.date) { var parts = (P.event.date||"").split("-");
+      if (parts.length===3) return new Date(+parts[0], +parts[1]-1, +parts[2]); }
+    return WEDDING;
+  }
+  function eventLabel(){
+    var P = prof();
+    return (P && P.event && P.event.name) ? P.event.name : "wedding";
+  }
+  function fmt(d){ var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return M[d.getMonth()]+' '+d.getDate(); }
+  function weeksBetween(a, b){ return (b - a) / (7 * 24 * 3600 * 1000); }
+  function rateFrom(lv){ return { 1:0.45, 2:0.62, 3:0.75, 4:0.85, 5:0.90 }[lv]; }
+  function eta(rate){
+    var D = distOf();
+    var wk = D / rate;
+    var band = 2 + 0.06 * wk;               // growing uncertainty, honest
+    var lo = new Date(NOW.getTime() + (wk - band) * 7 * 86400000);
+    var hi = new Date(NOW.getTime() + (wk + band) * 7 * 86400000);
+    var evw = weeksBetween(NOW, eventDate());
+    var atEvent = 212.4 - rate * evw;
+    return { wk: wk, loTxt: fmt(lo) + ' – ' + fmt(hi) + (lo.getFullYear() === hi.getFullYear() ? '' : ' ' + hi.getFullYear()),
+      atEvent: atEvent, evw: evw, dist: D };
+  }
+  function swapDateText(elx){ if (elx && elx.textContent.indexOf('Mar 4 – May 21') >= 0)
+    elx.textContent = elx.textContent.replace('Mar 4 – May 21', ETA.loTxt); }
+  function paintOn(etaObj){
+    var onEta = $id('on-eta');
+    if (onEta){ onEta.textContent = etaObj.loTxt;
+      $id('on-eta-note').textContent = 'at ' + (+el('#sl-r').value || 0.75).toFixed(2).replace(/0$/,'') + ' lb/wk · 80% band · re-learned at every check-in';
+      var gap = etaObj.atEvent - (prof() && prof().goal ? prof().goal : 185);
+      $id('on-event-line').textContent = (eventDate()===WEDDING ? 'Jun 14' : fmt(eventDate())) + ' · ~' + Math.max(0, etaObj.atEvent).toFixed(1) + ' lb at event';
+      $id('on-event-note').textContent = gap > 0.4 ? ("honest: I'm ~" + gap.toFixed(1) + " lb shy of band center by the wedding at this pace — the levers decide which side of that line we live on") : 'band center reachable before the wedding at this pace'; }
+    var le = $id('lv-eta');
+    if (le){ le.textContent = etaObj.loTxt;
+      $id('lv-eta-note').textContent = '80% band · ' + etaObj.wk.toFixed(0) + ' wk at this pace';
+      var g2 = Math.max(0, etaObj.atEvent - (prof() && prof().goal ? prof().goal : 185));
+      $id('lv-event').textContent = (eventDate()===WEDDING ? 'Jun 14' : fmt(eventDate())) + ' · ~' + etaObj.atEvent.toFixed(1) + ' lb';
+      $id('lv-event-note').textContent = g2 > 0.4 ? ('~' + g2.toFixed(1) + ' lb shy of center by the wedding') : 'center reached before the wedding — with room'; }
+  }
+  var ETA = eta(0.75);
+  paintOn(ETA);
+
+  /* ===== profile hydration of the passed home cells ===== */
+  function hydrateHome(){
+    var P = prof(); if (!P) return;
+    var stage = document.querySelector('#r-home .avatar-photo');
+    if (P['shot_shot-front'] && window.__ytdb){
+      window.__ytdb.get('shot-front', function(b){ if (b && stage) stage.src = URL.createObjectURL(b); });
+    }
+    /* the look photo ("this was me") = the dream's LOOK per the locked spec — replaces the stock dream stand-in */
+    if (P['shot_shot-look'] && window.__ytdb){
+      var lookDone = function(b){
+        if (!b) return;
+        var url = URL.createObjectURL(b);
+        var duo = document.querySelectorAll('#r-dream .duo-clip.d img, #r-dream .duo-clip img');
+        Array.from(duo).forEach(function(im){
+          if (im.closest('.duo-clip').classList.contains('d') || true) im.src = url;
+        });
+        var pairDream = document.querySelector('#r-home .pfig img:not([src*=today])');
+        if (pairDream) pairDream.src = url;
+      };
+      window.__ytdb.get('shot-look', lookDone);
+    }
+    var g = P.goal || 185, wn = P.weightNow || 212.4, st = P.startLb || wn;
+    var t0 = document.querySelector('#r-home .node.t0 .wt'), t1 = document.querySelector('#r-home .node.t1 .wt'), t2 = document.querySelector('#r-home .node.t2 .wt');
+    if (t0) t0.textContent = st; if (t1) t1.textContent = wn; if (t2) t2.textContent = g;
+    var d0 = document.querySelector('#r-dream .node.t0 .wt'), d1 = document.querySelector('#r-dream .node.t1 .wt'), d2n = document.querySelector('#r-dream .node.t2 .wt');
+    if (d0) d0.textContent = st; if (d1) d1.textContent = wn; if (d2n) d2n.textContent = g;
+    var ep = document.querySelector('#r-home .event-pill');
+    if (ep){ var d = eventDate(); var wk = Math.max(0, Math.round((d - NOW)/(7*86400000)));
+      ep.innerHTML = 'Event · <b>' + (P.event && P.event.name ? P.event.name : 'wedding') + ' — ' + fmt(d) + '</b> · ' + wk + ' wk · <b>80% on pace</b>'; }
+    Array.from(qs('#r-home .pnm')).forEach(function(x){
+      if (x.textContent.indexOf('now ·')>=0) x.textContent = 'now · ' + wn;
+      if (x.textContent.indexOf('dream ·')>=0) x.textContent = 'dream · ' + g;
+    });
+    var pl = el('#r-home .pl'); if (pl){ var delta = Math.abs(wn - g).toFixed(1);
+      pl.innerHTML = '<b>−' + delta + ' lb</b><s>±4.6 @ ' + fmt(eventDate()) + '</s><b>80%</b>'; }
+    var kn = document.querySelector('#r-dream .duo-knob');
+    if (kn){ var kd = Math.abs(wn - g); kn.textContent = '⇄ ' + kd.toFixed(1) + ' lb'; }
+  }
+  function recalc(){
+    ETA = eta(+el('#sl-r').value || 0.75);   // sl-r IS the lb/wk value, not a workouts key
+    var onE = el('#on-eta'); if (onE) onE.textContent = ETA.loTxt;
+    hydrateHome();
+    Array.from(qs('#r-home .trainer-line p, #r-home .tcard .micro')).forEach(swapDateText);
+    Array.from(qs('#r-dream .trainer-line p')).forEach(swapDateText);
+  }
+  window.__ytrecalc = recalc;
+  hydrateHome();
+  Array.from(qs('#r-home .trainer-line p, #r-home .tcard .micro')).forEach(swapDateText);
+  Array.from(qs('#r-dream .trainer-line p')).forEach(swapDateText);
+
+  /* ===== onboarding stepper ===== */
+  var onR = $id('ax-on');
+  if (onR){
+    var steps = onR.querySelectorAll('.ax-step');
+    var dots = onR.querySelectorAll('#on-dots i');
+    var idx = 0;
+    function show(n){
+      idx = n;
+      steps.forEach(function(s){ s.style.display = (+s.dataset.step === n) ? 'block' : 'none'; });
+      dots.forEach(function(d, i){ d.classList.toggle('on', i === n); });
+      onR.querySelector('#on-next').textContent = (n === steps.length - 1) ? 'Enter the app' : 'Continue';
+      var slot = onR.querySelector('#ax-on-levers');
+      if (+steps[n].dataset.step === 3 && slot && slot.dataset.filled !== 'yes'){
+        var lv = $id('ax-levers');
+        if (lv){ slot.innerHTML = lv.innerHTML; slot.dataset.filled = 'yes';
+          var clApply = slot.querySelector('#ax-apply');
+        if (clApply){
+          clApply.textContent = 'Apply to my plan';
+          clApply.id = 'on-apply-clone';
+          clApply.addEventListener('click', function(){ toast('Levers set — continue'); });
+        }
+          wireLevers(slot);   // clone gets its own live wiring (ids are dups; scoped sv keeps them separate)
+          clApply.addEventListener('click', function(){ toast('Levers set — continue'); });
+        }
+      }
+    }
+    onR.querySelector('#on-next').addEventListener('click', function(){
+      if (idx === steps.length - 1){ go('home'); return; }
+      show(idx + 1);
+    });
+    var finish = onR.querySelector('#on-finish');
+    if (finish) finish.addEventListener('click', function(){ go('home'); });
+    Array.from(onR.querySelectorAll('.skip')).forEach(function(b){
+      b.addEventListener('click', function(){ go('home'); }); });
+    show(0);
+  }
+
+  /* ===== levers live wiring ===== */
+  var fw = { 0: 'flexible', 1: 'low-carb', 2: 'precision' };
+  function wireLevers(root){
+    function sv(sel){ return root.querySelector(sel); }
+    var rateTouched = false;
+    var rateSlider = sv('#sl-r');
+    rateSlider && rateSlider.addEventListener('input', function(){ rateTouched = true; });
+    function upd(){
+      var w = +sv('#sl-w').value, s = sv('#sl-s').value, f = +sv('#sl-f').value;
+      if (!rateTouched){ var rr = rateFrom(w); sv('#sl-r').value = rr; }
+      var r = rateTouched ? +sv('#sl-r').value : rateFrom(w);
+      sv('#lv-w').textContent = w; sv('#lv-s').textContent = (+s).toFixed(1) + ' h';
+      sv('#lv-f').textContent = fw[f]; sv('#lv-r').textContent = (+r).toFixed(2).replace(/0$/,'') + ' lb/wk';
+      var e2 = eta(+r);
+      var el2 = sv('#lv-eta');
+      if (el2){ el2.textContent = e2.loTxt;
+        sv('#lv-eta-note').textContent = '80% band · ' + e2.wk.toFixed(0) + ' wk at this pace';
+        var g = Math.max(0, e2.atEvent - (prof() && prof().goal ? prof().goal : 185));
+        sv('#lv-event').textContent = (eventDate()===WEDDING ? 'Jun 14' : fmt(eventDate())) + ' · ~' + e2.atEvent.toFixed(1) + ' lb';
+        sv('#lv-event-note').textContent = g > 0.4 ? ('~' + g.toFixed(1) + ' lb shy of center by the wedding') : 'center reached before the wedding — with room'; }
+    }
+    ['#sl-w','#sl-s','#sl-f','#sl-r'].forEach(function(sel){
+      var elx = sv(sel); if (elx) elx.addEventListener('input', function(){ upd(); });
+    });
+    upd();
+  }
+  wireLevers(document.getElementById('ax-levers'));
+  var apply = $id('ax-apply');
+  if (apply) apply.addEventListener('click', function(){ toast('Plan applied — the timeline re-bands at your next check-in'); });
+
+  /* ===== back-nav buttons ===== */
+  var g1 = $id('ax-go-levers'); if (g1) g1.addEventListener('click', function(){ go('levers'); });
+  var g2 = $id('ax-go-checkin'); if (g2) g2.addEventListener('click', function(){ go('checkin'); });
+  var g3 = $id('ax-go-alarm'); if (g3) g3.addEventListener('click', function(){ go('alarm'); });
+  var g4 = $id('ax-go-maint'); if (g4) g4.addEventListener('click', function(){ go('maint'); });
+  var ab = $id('ax-alarm-back'); if (ab) ab.addEventListener('click', function(){ go('progress'); });
+  var mb = $id('ax-maint-back'); if (mb) mb.addEventListener('click', function(){ go('progress'); });
+  var yb = $id('ax-you-back'); if (yb) yb.addEventListener('click', function(){ go('home'); });
+  var pb = $id('ax-plan-back'); if (pb) pb.addEventListener('click', function(){ go('home'); });
+
+  /* ===== log capture demo (pre-data-layer visual pass; js3 handles real entries) ===== */
+  var lv = $id('ax-log-voice');
+  if (lv){
+    var qv = lv.querySelector('.ax-q'); var vr = lv.querySelector('#voice-result');
+    if (vr) vr.style.display='none';
+    qv.addEventListener('click', function(){
+      qv.textContent='◉ listening…';
+      setTimeout(function(){ qv.textContent='◉ Just tell me';
+        if (vr) vr.style.display='block';
+      }, 900);
+    });
+  }
+
+  /* ===== you: sass dial + GLP-1 ===== */
+  var DIAL = {
+    'gentle': '\u201cSmall weeks still count. I\'ll keep the pace honest and the notes kind.\u201d',
+    'neutral': '\u201cProtein held through the travel week. I arrive on the later side of the band at this pace.\u201d',
+    'sassy': '\u201cThird Tuesday you \'forgot\' the tape measure. The jeans don\'t care — they\'re still waiting, and so am I.\u201d' };
+  Array.from(qs('#ax-dial .ax-chip')).forEach(function(c){
+    c.addEventListener('click', function(){
+      qs('#ax-dial .ax-chip').forEach(function(x){ x.classList.remove('on'); });
+      c.classList.add('on');
+      $id('ax-dial-line').textContent = DIAL[c.textContent.trim()] || DIAL['neutral'];
+    });
+  });
+  var glp = el('#r-you .ax-lrow');
+  if (glp) glp.addEventListener('click', function(){
+    var amt = glp.querySelector('.amt'); if (!amt) return;
+    var on = amt.textContent.indexOf('on') === 0;
+    amt.textContent = on ? 'off (tap to preview)' : 'on — protein-first hero live';
+  });
+})();</script>
+<script>(function(){
+  function $id(x){ return document.getElementById(x); }
+  function qs(s,r){ return (r||document).querySelectorAll(s); }
+  function el(s,r){ return (r||document).querySelector(s); }
+  function prof(){ return window.__ytprof ? window.__ytprof.load() : null; }
+  function persist(){ if (window.__ytprof) window.__ytprof.save(); }
+
+  /* ================= movement library + injuries ================= */
+  var LIB = {
+    squat:   { name:'Squat pattern', moves:[['goblet squat','quad/glute'],['box squat','quad, back-friendly'],['split squat','unilateral']] },
+    hinge:   { name:'Hinge',         moves:[['hip thrust','glute'],['RDL','hamstring, back-aware'],['sumo DL','posterior chain']] },
+    push:    { name:'Horizontal push', moves:[['push-up','chest/triceps'],['DB bench','chest'],['landmine press','SHOULDER-SAFE swap for overhead']] },
+    pull:    { name:'Pull',          moves:[['chest-supported row','BACK-SAFE swap for barbell row'],['lat pulldown','lats'],['face pull','rear delts/health']] },
+    carry:   { name:'Carry + core',  moves:[['suitcase carry','core/grip'],['plank','core'],['farmer hold','grip']] },
+  };
+  var SWAP = { 'overhead press':'landmine press', 'barbell row':'chest-supported row' };
+  var INJ = [{id:'shoulder', label:'Shoulder (L)'}, {id:'back', label:'Low back'}, {id:'knee', label:'Knees'}];
+  function injured(){ 
+    var P = prof(); 
+    return (P && P.injuries) ? P.injuries : []; }
+
+  /* ================= PLAN BUILDER (deep view) ================= */
+  var WEEK_TEMPLATE = {
+    2: [{d:'Mon', f:'full-body strength'}, {d:'Wed', f:'upper (shoulder-safe)'}],
+    3: [{d:'Mon', f:'full-body strength'}, {d:'Wed', f:'upper (shoulder-safe)'}, {d:'Sat', f:'lower + carry'}],
+    4: [{d:'Mon', f:'full-body strength'}, {d:'Tue', f:'easy walk'}, {d:'Thu', f:'upper (shoulder-safe)'}, {d:'Sat', f:'lower + carry'}]
+  };
+  function renderPlan(){
+    var P = prof();
+    var days = (P && P.trainDays) ? P.trainDays : 3;
+    var inj = injured();
+    var container = el('#ax-sessions'); if (!container) return;
+    var sessions = WEEK_TEMPLATE[days] || WEEK_TEMPLATE[3];
+    var h = '';
+    sessions.forEach(function(s, si){
+      var focus = s.f;
+      var picks = pickMoves(focus, inj);
+      h += '<div class="ax-card ax-session" data-si="'+si+'"><div class="ax-q">'+s.d+' · '+focus+'</div>';
+      picks.forEach(function(mv){
+        var swapNote = (mv[2] && inj.length) ? ' <span class="ax-subtag">'+mv[2]+'</span>' : '';
+        h += '<div class="ax-lrow ax-move"><span class="ax-mname">'+mv[0]+swapNote+'</span>'
+           + '<span class="ax-sets"><input class="ax-input ax-si" type="number" min="1" max="10" value="3" data-k="sets">×<input class="ax-input ax-si" type="number" min="1" max="30" value="8" data-k="reps">·<input class="ax-input ax-si" style="width:64px" type="text" inputmode="decimal" placeholder="lb" data-k="load"></span></div>';
+      });
+      h += '<p class="ax-note">tap a movement — the library swaps it for anything on your off-limits list, with the reason</p></div>';
+    });
+    container.innerHTML = h;
+    Array.from(qs('.ax-move .ax-mname', container)).forEach(function(mn){
+      mn.addEventListener('click', function(){ openLib(mn); });
+    });
+    Array.from(qs('.ax-si', container)).forEach(function(inp){
+      inp.addEventListener('change', function(){ storeWorkout(days, inj); });
+    });
+    storeWorkout(days, inj);
+  }
+  function pickMoves(focus, inj){
+    // shoulder-safe default picks, honoring flagged injuries
+    if (focus.indexOf('upper') >= 0)
+      return inj.indexOf('back')>=0 ? [['lat pulldown'],['chest-supported row','low back safe'],['landmine press','shoulder-safe',' swap']] : [['push-up'],['chest-supported row','low back safe'],['landmine press','shoulder-safe']];
+    if (focus.indexOf('lower') >= 0)
+      return inj.indexOf('knee')>=0 ? [['hip thrust'],['box squat','knee-friendly'],['suitcase carry']] : [['goblet squat'],['hip thrust'],['suitcase carry']];
+    if (focus.indexOf('easy') >= 0) return [['brisk walk','30 min'],['mobility flow']];
+    return inj.indexOf('back')>=0 ? [['goblet squat'],['hip thrust'],['suitcase carry'],['face pull']] : [['goblet squat'],['RDL','hinge'],['push-up'],['face pull']];
+  }
+  function openLib(rowEl){
+    // inline library sheet inside the card
+    var card = rowEl.closest('.ax-session');
+    var existing = card.querySelector('.ax-lib');
+    if (existing){ existing.remove(); return; }
+    var inj = injured();
+    var h = '<div class="ax-lib"><div class="ax-q">Movement library</div>';
+    Object.keys(LIB).forEach(function(k){
+      h += '<div class="ax-lrow"><span class="ax-mname">'+LIB[k].name+'</span><span class="ax-subtag">'+LIB[k].moves.length+' options</span></div>';
+      LIB[k].moves.forEach(function(mv){
+        var tag = (mv[1] && (mv[1].indexOf('SAFE')>=0 || mv[1].indexOf('-SAFE')>=0)) ? ' <span class="ax-subtag">'+mv[1]+'</span>' : '';
+        h += '<div class="ax-lrow" style="padding:6px 2px"><span class="ax-mname">'+mv[0]+tag+'</span><button class="ax-ghost sel" style="width:auto;padding:5px 10px">use</button></div>';
+      });
+    });
+    h += '<button class="ax-ghost" style="margin-top:6px">close</button></div>';
+    var lib = document.createElement('div'); lib.innerHTML = h; lib.className='ax-lib';
+    card.appendChild(lib);
+    lib.querySelector('.ax-ghost').addEventListener('click', function(){ lib.remove(); });
+    Array.from(qs('.sel', lib)).forEach(function(b, i){
+      b.addEventListener('click', function(){
+        // swap the movement name in place (mock depth: first match)
+        var flat = []; Object.keys(LIB).forEach(function(k){ flat = flat.concat(LIB[k].moves.map(function(m){ return m[0]; })); });
+        rowEl.querySelector('.ax-mname') || rowEl;
+        var nameEl = rowEl; while (nameEl && !nameEl.classList.contains('ax-mname')) nameEl = nameEl.querySelector ? rowEl.querySelector('.ax-mname') : null;
+        if (nameEl) { var base = flat[i] || rowEl.textContent; nameEl.innerHTML = base; }
+        lib.remove(); toast('swapped — the plan re-balances');
+      });
+    });
+  }
+
+  /* injury-flag chips → live swap */
+  var INJ_IDS = ['shoulder', 'back', 'knee'];
+  Array.from(qs('#pl-inj .ax-chip')).forEach(function(chip){
+    chip.addEventListener('click', function(){
+      chip.classList.toggle('on');
+      var sel = Array.from(qs('#pl-inj .ax-chip.on')).map(function(c){
+        var idx = Array.from(chip.parentElement.children).indexOf(c); return INJ_IDS[idx]; });
+      window.__ytprof.set({ injuries: sel });
+      renderPlan();
+    });
+  });
+
+  /* ================= workout state store ================= */
+  function storeWorkout(days, inj){
+    var P = prof() || (window.__ytprof ? window.__ytprof.set({}) : null);
+    if (!P) return;
+    P.trainDays = days; P.injuries = inj;
+    P.workoutPlan = Array.from(qs('#ax-sessions .ax-session')).map(function(c){
+      return { day: c.querySelector('.ax-q').textContent.split(' · ')[0],
+               moves: Array.from(qs('.ax-move', c)).map(function(r){ return r.querySelector('.ax-mname').textContent.trim(); }) };
+    });
+    persist();
+  }
+
+  /* ================= FOOD (macros + protein + micros) ================= */
+  var MICROS = [
+    ['Sodium','sodium','mg','2200','mg'], ['Potassium','potassium','mg','3400','mg'],
+    ['Magnesium','magnesium','mg','420','mg'], ['Iron','iron','mg','18','mg'],
+    ['Zinc','zinc','mg','11','mg'], ['Vitamin D','vitd','iu','2000','IU']
+  ];
+  function seedFood(P){
+    if (P.food && P.food.length) return false;
+    P.food = [
+      { n:'Two eggs · toast · black coffee', kcal:340, p:19, c:22, f:17, src:'voice', t:'8:04am' },
+      { n:'Salmon plate', kcal:640, p:48, c:12, f:38, src:'photo', t:'12:30' },
+      { n:'Greek yogurt · berries', kcal:220, p:20, c:24, f:6, src:'1-tap', t:'3:15' }
+    ];
+    P.micros = { sodium:68, potassium:74, magnesium:58, iron:81, zinc:66, vitd:42 };
+    P.budget = { weekly: 15400, planned: 1100, used6: 10450 };
+    return true;
+  }
+  function renderFood(){
+    var P = prof();
+    var wn = (P && P.weightNow) ? P.weightNow : 212.4;
+    var seeded = P ? seedFood(P) : false;
+    if (seeded) persist();
+    var food = (P && P.food) ? P.food : [];
+    var host = el('#ax-plate-list'); if (!host) return;
+    var h = '';
+    food.forEach(function(f, i){
+      h += '<div class="ax-lrow ax-meal"><span class="ax-mname">'+f.n+' <span class="ax-subtag">'+f.src+' · '+f.t+'</span></span>'
+         + '<span class="ax-sets">~<input class="ax-input ax-si" style="width:70px" type="number" inputmode="numeric" value="'+f.kcal+'" data-i="'+i+'">kcal '
+         + '<span class="ax-prot">P'+f.p+'</span></span></div>';
+    });
+    host.innerHTML = h;
+    Array.from(qs('#ax-plate-list input')).forEach(function(inp){
+      inp.addEventListener('change', function(){
+        var i = +inp.dataset.i;
+        if (prof() && prof().food[i]) { prof().food[i].kcal = +inp.value; persist(); compute(); }
+      });
+    });
+    compute();
+    function compute(){
+      var P2 = prof()||{}; var f = P2.food||[];
+      var K=0,Pr=0,C=0,F=0;
+      f.forEach(function(x){ K+=x.kcal; Pr+=x.p; C+=x.c; F+=x.f; });
+      var day = el('#ax-day'); if (day){
+        day.querySelector('#ax-kcal').textContent = K.toLocaleString();
+        day.querySelector('#ax-prot').textContent = Pr + ' g';
+        day.querySelector('#ax-protlb').textContent = (Pr / wn).toFixed(2) + ' g/lb';
+        var hit = (Pr/wn) >= 0.7;
+        day.querySelector('#ax-protlb').style.color = hit ? '#0FD2B1' : '#F2C057';
+        day.querySelector('#ax-protlb-txt').textContent = hit ? '✓ target 0.7' : 'under 0.7 — eat protein, lift';
+        var cw = Math.max(0,Math.min(100, K ? (C*4/K)*100 : 0));
+        var pw = Math.max(0,Math.min(100, K ? (Pr*4/K)*100 : 0));
+        var fw = 100-cw-pw;
+        day.querySelector('#ax-split').innerHTML =
+          '<i style="width:'+pw+'%;background:#0FD2B1"></i><i style="width:'+cw+'%;background:#7FE9CF;opacity:.5"></i><i style="width:'+fw+'%;background:rgba(166,172,179,.5)"></i>';
+        day.querySelector('#ax-splitlab').textContent = 'C'+Math.round(cw)+'% · P'+Math.round(pw)+'% · F'+Math.round(fw)+'%';
+      }
+      /* micros */
+      var M = (P2 && P2.micros) ? P2.micros : {};
+      var mh = ''; MICROS.forEach(function(m){ var v = M[m[1]] != null ? M[m[1]] : (40 + Math.floor(Math.random()*50));
+        mh += '<div class="ax-microitem"><span>'+m[0]+'</span><span class="ax-bar"><i style="width:'+Math.min(100,v)+'%;background:'+(v>=70?'#0FD2B1':'#F2C057')+'"></i></span><span class="ax-subtag">'+v+'% RDA</span></div>'; });
+      var ms = el('#ax-micros'); if (ms){ ms.innerHTML = mh;
+        var note = el('#ax-micros-note'); }
+    }
+  }
+
+  /* ================= capture → real entry rows ================= */
+  function wireCaptures(){
+    var lp = el('#ax-log-photo');
+    if (lp){
+      // REAL camera/photo input on phone (the analysis stays mock + editable)
+      var cam = document.createElement('input');
+      cam.type='file'; cam.accept='image/*'; cam.capture='environment';
+      cam.style.cssText='position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;';
+      lp.style.position='relative'; lp.style.overflow='hidden';
+      lp.appendChild(cam);
+      cam.addEventListener('change', function(){
+        var f = cam.files && cam.files[0];
+        if (!f) return;
+        if (lp.querySelector('.mealthumb')) lp.querySelector('.mealthumb').remove();
+        var th = document.createElement('img'); th.className='mealthumb';
+        th.src = URL.createObjectURL(f); lp.appendChild(th);
+        var P = prof();
+        if (!P || !P.onboarded){ toast('finish onboarding first — the mock logs go live after'); return; }
+        seedFood(P); P.food.push({ n:'Photo capture — estimated', kcal:560, p:37, c:41, f:19, src:'photo', t:'just now', shot:true });
+        persist(); renderFood(); toast('logged ~560 kcal · P37 — estimate, fine by design');
+      });
+      var q = lp.querySelector('.ax-q');
+
+    }
+    var lv = el('#ax-log-voice');
+    if (lv){
+      var qv = lv.querySelector('.ax-q'); var vr = lv.querySelector('#voice-result');
+      if (vr) vr.style.display='none';
+      qv.addEventListener('click', function(){
+        qv.textContent='◉ listening…';
+        setTimeout(function(){ qv.textContent='◉ Just tell me';
+          var P = prof(); if (P) { seedFood(P); P.food.push({ n:'“chicken wrap · water”', kcal:430,p:33,c:31,f:15,src:'voice',t:'6:40pm' }); persist(); renderFood(); }
+          if (vr) vr.style.display='block';
+          toast('voice logged in 9s');
+        }, 900);
+      });
+    }
+    var wl = el('#ax-wlog');
+    if (wl){
+      Array.from(qs('.ax-rpe i', wl)).forEach(function(t){
+        t.addEventListener('click', function(){
+          Array.from(qs('.ax-rpe i', wl)).forEach(function(x){ x.classList.remove('on'); });
+          t.classList.add('on');
+          var done = el('#ax-wlog-done'); if (done) done.style.display='block';
+          var P = prof(); if (P){ P.lastRpe = t.textContent; persist(); }
+          toast('session logged — reps + how they felt');
+        });
+      });
+      var wq = wl.querySelector('.ax-q.logme');
+      if (wq) wq.addEventListener('click', function(){
+        wq.textContent = '◉ “5×5 squats … felt strong” — parsed';
+        var done = el('#ax-wlog-done'); if (done) done.style.display='block';
+      });
+    }
+  }
+
+  /* ================= boot ================= */
+  function boot(){
+    renderPlan();
+    renderFood();
+    wireCaptures();
+    if (window.__ytrecalc) { var old = window.__ytrecalc; window.__ytrecalc = function(){ old(); renderFood(); }; }
+  }
+  if (document.readyState !== 'loading') boot();
+  else document.addEventListener('DOMContentLoaded', boot);
+})();</script>
+<script>(function(){
+  /* ===== B: check-in weigh-in → engine re-learn ===== */
+  var ciw = document.getElementById('ci-w'), cir = document.getElementById('ci-rate');
+  function ciCommit(){
+    var P = window.__ytprof ? window.__ytprof.load() : null;
+    if (!P || !P.onboarded){ return; }
+    var patch = {};
+    if (+ciw.value) patch.weightNow = +ciw.value;
+    if (+cir.value) patch.trendRate = +cir.value;
+    if (Object.keys(patch).length){
+      window.__ytprof.set(patch);
+      window.__ytrecalc && window.__ytrecalc();
+      var up = document.getElementById('ci-updated');
+      if (up){ up.style.display='inline-block';
+        up.textContent = 'timeline updated · arrival ' + (document.getElementById('on-eta') ? '' : '');
+        up.textContent = 'timeline re-learned'; }
+    }
+  }
+  ciw && ciw.addEventListener('input', ciCommit);
+  cir && cir.addEventListener('input', ciCommit);
+
+  /* ===== C: MATADOR phase strip ===== */
+  function renderPhases(){
+    var host = document.getElementById('ax-phases');
+    if (!host) return;
+    var NOW = new Date(2026, 10, 2);
+    // 24 weeks in: 8-wk cut + 1-wk break pattern (MATADOR); next break = 8 weeks from last block boundary
+    var segs = [];
+    var wk = 24;
+    var cuts = [];
+    var weekCursor = 0;
+    for (var i = 0; i < Math.ceil(wk / 9); i++){
+      cuts.push(weekCursor); weekCursor += 8;      // cut
+      cuts.push(weekCursor); weekCursor += 1;      // break
+    }
+    var h = '';
+    cuts.forEach(function(start, idx){
+      var isBreak = (idx % 2 === 1);
+      var w = (isBreak ? 1 : 8) * (100 / 24);
+      h += '<i style="width:' + w.toFixed(1) + '%;background:' + (isBreak ? 'rgba(242,192,87,.75)' : '#0FD2B1') + '"></i>';
+    });
+    host.innerHTML = h;
+    // next break: week 24 = inside the current cut (cut started at wk 19) → break at wk 27
+    var d = new Date(NOW.getTime() + (27 - 24) * 7 * 86400000);
+    var M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var note = document.getElementById('ax-phnote');
+    if (note) note.innerHTML = 'jade = cut · amber = planned break — the diet breaks protect the muscle and the head. <b>next break lands ~' + M[d.getMonth()] + ' ' + d.getDate() + '</b>; the engine books it, you just keep logging.';
+  }
+  renderPhases();
+
+  /* ===== D: gentle path on a flagged answer ===== */
+  var careCard = document.getElementById('ax-care');
+  var foodCards = Array.from(document.querySelectorAll('#ax-on .ax-card'));
+  var foodQ = foodCards.filter(function(c){ return c.textContent.indexOf('food that feels hard') >= 0; })[0];
+  if (foodQ){
+    Array.from(foodQ.querySelectorAll('.ax-chip')).forEach(function(ch){
+      ch.addEventListener('click', function(){
+        Array.from(foodQ.querySelectorAll('.ax-chip')).forEach(function(x){ x.classList.remove('on'); });
+        ch.classList.add('on');
+        var flagged = ch.textContent.trim() === 'Yes' || ch.textContent.trim() === 'Prefer not to say';
+        if (careCard) careCard.style.display = flagged ? 'block' : 'none';
+      });
+    });
+  }
+
+  /* ===== E: waist display from baseline ===== */
+  function waistLine(){
+    var P = window.__ytprof ? window.__ytprof.load() : null;
+    var elx = document.getElementById('ax-waist-line');
+    if (elx) elx.textContent = P && P.waist ? (P.waist + '″ at baseline') : '— take it in the baseline';
+  }
+  waistLine();
+  if (window.__ytrecalc){ var oldRecalc = window.__ytrecalc; window.__ytrecalc = function(){ oldRecalc(); waistLine(); }; }
+})();</script>
+<script>
+(function(){
+  /* measurement guide links + back */
+  function glink(e){
+    var a = e.target.closest('.ax-glink');
+    if (!a) return;
+    window.__guideFrom = a.dataset.from || null;
+    go('guide');
+  }
+  document.addEventListener('click', glink);
+  var back = document.getElementById('ax-guide-back');
+  if (back) back.addEventListener('click', function(){
+    go(window.__guideFrom || 'home');
+  });
+})();
+</script>
+</body></html>
