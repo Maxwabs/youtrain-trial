@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A0B0D">
+<title>FRANKENFIT — clone spike</title>
+<link rel="manifest" href="spike-clone-hybrid.webmanifest">
+<link rel="apple-touch-icon" href="spike-ff-icons/180.png">
+<style>
+:root{
+  --bg:#0A0B0D; --surf:#14161A; --surf2:#1B1F26; --line:#262B34;
+  --ink:#F2F4F6; --mut:#8B93A0; --dim:#5C6470;
+  --acc:#D8FF3D; --acc-ink:#121600; --ok:#3DFFA5; --warn:#FFB03D; --bad:#FF6A5C;
+  --r:20px; --tab-h:64px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;}
+#app{max-width:430px;margin:0 auto;min-height:100dvh;position:relative;
+  padding:0 16px calc(var(--tab-h) + 28px); }
+.screen{display:none;animation:rise .28s ease;}
+.screen.active{display:block;}
+@keyframes rise{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+@keyframes pop{0%{transform:scale(.6);opacity:0;}70%{transform:scale(1.06);}100%{transform:scale(1);opacity:1;}}
+@keyframes ringdraw{from{stroke-dashoffset:251;}to{stroke-dashoffset:var(--ring-off);}}
+@keyframes countflash{0%{color:var(--acc);}100%{color:var(--ink);}}
+
+h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.02em;}
+.display{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1;
+  font-variant-numeric:tabular-nums;}
+.num{font-variant-numeric:tabular-nums;font-weight:700;}
+.mut{color:var(--mut);} .dim{color:var(--dim);}
+.small{font-size:13px;} .tiny{font-size:11px;letter-spacing:.06em;text-transform:uppercase;}
+.tiny{font-weight:600;}
+.volt{color:var(--acc);}
+
+.topbar{padding:18px 2px 12px;display:flex;align-items:center;justify-content:space-between;}
+.brand{font-weight:800;letter-spacing:.14em;font-size:13px;}
+.brand em{font-style:normal;color:var(--acc);}
+.demopill{font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--dim);
+  border:1px solid var(--line);border-radius:99px;padding:4px 9px;}
+
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px;margin:12px 0;}
+.card.flat{background:var(--surf2);border-color:transparent;}
+.card h3{font-size:15px;}
+.row{display:flex;align-items:center;gap:10px;}
+.between{justify-content:space-between;}
+.wrap{flex-wrap:wrap;}
+.grow{flex:1;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.mt{margin-top:12px;} .mb{margin-bottom:12px;}
+
+.btn{display:block;width:100%;padding:16px;border-radius:16px;border:none;
+  font-size:16px;font-weight:700;text-align:center;cursor:pointer;
+  background:var(--acc);color:var(--acc-ink);}
+.btn:active{transform:scale(.985);}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);}
+.btn.sub{background:var(--surf2);color:var(--ink);font-weight:600;font-size:14px;padding:13px;}
+.btnrow{display:flex;gap:10px;margin-top:14px;}
+.btnrow .btn{margin:0;}
+
+.chip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;
+  background:var(--surf2);font-size:12px;font-weight:600;color:var(--ink);border:1px solid var(--line);}
+.chip.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);}
+.chip .dot{width:6px;height:6px;border-radius:99px;background:var(--ok);}
+
+.pick{width:100%;text-align:left;background:var(--surf);border:1px solid var(--line);
+  border-radius:16px;padding:16px;margin:8px 0;color:var(--ink);cursor:pointer;display:block;}
+.pick.on{border-color:var(--acc);background:rgba(216,255,61,.06);}
+.pick b{display:block;font-size:16px;margin-bottom:3px;}
+.pick span{color:var(--mut);font-size:13px;}
+
+.field{background:var(--surf2);border:1px solid var(--line);border-radius:14px;
+  padding:13px 14px;width:100%;color:var(--ink);font-size:16px;font-weight:600;outline:none;}
+.field:focus{border-color:var(--acc);}
+label.lab{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--dim);margin:12px 4px 6px;}
+
+.seg{display:flex;background:var(--surf2);border-radius:14px;padding:4px;gap:4px;}
+.seg button{flex:1;border:none;background:transparent;color:var(--mut);
+  padding:10px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;}
+.seg button.on{background:var(--acc);color:var(--acc-ink);}
+.seg.sm button.on{background:var(--surf);color:var(--ink);}
+
+input[type=range]{width:100%;appearance:none;height:44px;background:transparent;}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;
+  background:linear-gradient(to right,var(--acc) var(--fill,50%),var(--surf2) var(--fill,50%));}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:26px;height:26px;border-radius:99px;
+  background:var(--ink);margin-top:-10px;box-shadow:0 2px 10px rgba(0,0,0,.5);}
+
+.ring{transform:rotate(-90deg);}
+.ring .trk{stroke:#232A34;}
+.ring .val{stroke:var(--acc);stroke-linecap:round;stroke-dasharray:251;
+  animation:ringdraw 1.1s ease forwards;}
+
+.spark{width:100%;height:80px;display:block;}
+.spark .band{fill:rgba(216,255,61,.07);}
+.spark .ln{fill:none;stroke:var(--acc);stroke-width:2.5;}
+.spark .pt{fill:var(--ink);stroke:var(--acc);stroke-width:2;}
+
+.tier{display:flex;align-items:center;gap:14px;background:var(--surf);
+  border:1px solid var(--line);border-radius:18px;padding:16px;width:100%;
+  color:var(--ink);cursor:pointer;text-align:left;margin:8px 0;}
+.tier.on{border-color:var(--acc);background:rgba(216,255,61,.05);}
+.tier .amt{font-size:22px;font-weight:800;min-width:74px;font-variant-numeric:tabular-nums;}
+.tier .amt small{font-size:12px;color:var(--mut);font-weight:600;}
+.tier .tag{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--acc-ink);background:var(--acc);border-radius:6px;padding:3px 7px;margin-left:6px;}
+.radio{width:20px;height:20px;border-radius:99px;border:2px solid var(--dim);margin-left:auto;flex:none;}
+.tier.on .radio{border-color:var(--acc);background:radial-gradient(circle at center,var(--acc) 0 6px,transparent 7px);}
+
+.exrow{display:flex;align-items:center;gap:12px;background:var(--surf);
+  border:1px solid var(--line);border-radius:16px;padding:14px;margin:8px 0;}
+.sets{display:flex;gap:8px;margin-left:auto;}
+.setc{width:44px;height:44px;border-radius:14px;background:var(--surf2);
+  border:1px solid var(--line);color:var(--ink);font-weight:700;font-size:13px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;}
+.setc.done{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);animation:pop .3s;}
+.setc small{font-size:8px;font-weight:800;color:inherit;opacity:.65;}
+.setc.next{border-color:var(--acc);border-style:dashed;}
+
+.rirsheet{position:fixed;inset:0;background:rgba(5,6,8,.6);backdrop-filter:blur(8px);
+  display:none;align-items:flex-end;justify-content:center;z-index:60;}
+.rirsheet.open{display:flex;animation:rise .25s;}
+.rirbox{background:var(--surf);border-radius:24px 24px 0 0;width:100%;max-width:430px;
+  padding:20px 16px 34px;border-top:1px solid var(--line);}
+.grab{width:38px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 16px;}
+.rirop{display:flex;gap:8px;margin:14px 0;}
+.rirop button{flex:1;padding:18px 0;border-radius:14px;border:1px solid var(--line);
+  background:var(--surf2);color:var(--ink);font-size:20px;font-weight:800;cursor:pointer;}
+.rirop button:active{background:var(--acc);color:var(--acc-ink);}
+
+.bar{height:10px;border-radius:99px;background:var(--surf2);overflow:hidden;}
+.bar>i{display:block;height:100%;background:var(--acc);border-radius:99px;
+  transition:width .5s ease;}
+.bar.tall{height:16px;}
+.macroline{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:13px;}
+.macroline .lab2{width:54px;color:var(--mut);font-weight:600;}
+.macroline .val{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;}
+
+.chatb{max-width:82%;padding:12px 15px;border-radius:18px;margin:8px 0;font-size:14px;line-height:1.45;}
+.chatb.you{margin-left:auto;background:var(--acc);color:var(--acc-ink);border-bottom-right-radius:6px;font-weight:600;}
+.chatb.coach{background:var(--surf2);border-bottom-left-radius:6px;}
+.chatb.coach b{color:var(--acc);}
+.chatscroll{height:230px;overflow:auto;padding:6px 2px;}
+
+.tabbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tab-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  background:var(--bg);border-top:1px solid var(--line);
+  display:flex;z-index:50;max-width:430px;margin:0 auto;}
+.tabbar button{flex:1;border:none;background:transparent;color:var(--dim);
+  font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;}
+.tabbar .tic{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;
+  stroke-linecap:round;stroke-linejoin:round;}
+.tabbar button.on{color:var(--ink);}
+.tabbar button.on::before{content:"";position:absolute;margin-top:-26px;width:16px;height:3px;
+  border-radius:99px;background:var(--acc);}
+
+.statrow{display:flex;gap:10px;}
+.stat{flex:1;background:var(--surf);border:1px solid var(--line);border-radius:16px;
+  padding:13px 14px;}
+.stat .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.stat .k{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-top:3px;}
+
+.note{font-size:12px;color:var(--dim);line-height:1.5;padding:10px 4px;}
+.hr{height:1px;background:var(--line);margin:16px 0;}
+.qfade{transition:opacity .2s;}
+.bigemoji{font-size:30px;}
+.toast{position:fixed;bottom:calc(var(--tab-h) + 20px);left:50%;transform:translateX(-50%);
+  background:var(--ink);color:#0A0B0D;font-weight:700;font-size:13px;padding:11px 18px;
+  border-radius:99px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:70;white-space:nowrap;}
+.toast.show{opacity:1;}
+.hero{position:relative;height:400px;border-radius:24px;overflow:hidden;
+  background:var(--surf2);border:1px solid var(--line);margin:12px 0 6px;}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:top;transition:opacity .25s, filter .3s;}
+.hero.muted img{filter:saturate(.55) contrast(.92);}
+.stagechip{position:absolute;top:12px;left:12px;z-index:3;font-size:10px;font-weight:800;
+  letter-spacing:.08em;color:#4E600F;background:#F7FFDD;border-radius:99px;padding:6px 11px;}
+.stagepanel{position:absolute;left:0;right:0;bottom:0;z-index:3;
+  background:rgba(10,11,13,.93);backdrop-filter:blur(8px);padding:10px 12px 12px;}
+.scrubrow{display:flex;justify-content:space-between;align-items:center;}
+.stop{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;
+  padding:7px 14px;border-radius:14px;background:transparent;border:none;color:var(--ink);}
+.stop .k{font-size:9px;letter-spacing:.1em;color:var(--dim);font-weight:800;text-transform:uppercase;}
+.stop .v{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+.stop.now .v{color:var(--acc);}
+.stop.sel{background:rgba(216,255,61,.12);}
+.trainerline{margin:2px 4px 4px;font-size:14px;font-weight:600;color:var(--ink);}
+.footer-tag{text-align:center;color:var(--dim);font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;margin-top:22px;font-weight:700;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div class="brand">FRANKEN<em>FIT</em></div>
+    <div class="demopill">HYBRID V2 · STAND-INS + DEMO DATA</div>
+  </div>
+  <main id="routes"></main>
+  <div class="footer-tag">stitched from the best · on-device only</div>
+</div>
+<nav class="tabbar" id="tabbar" style="display:none"></nav>
+
+<div class="rirsheet" id="rirsheet">
+  <div class="rirbox">
+    <div class="grab"></div>
+    <h3 id="rirtitle">Set done</h3>
+    <div class="mut small" id="rirsub">How many more good reps were in the tank?</div>
+    <div class="rirop" id="rirops"></div>
+    <div class="note" id="rirhint">Reps-in-reserve adjusts your next set automatically — honest effort in, honest targets out.</div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('spike-ff-sw.js').catch(()=>{}); }
+</script>
+<script>
+/* ============ FRANKENFIT spike — engine + data ============ */
+const $ = s => document.querySelector(s);
+const LS_KEY = 'frankenfit.v1';
+
+const store = {
+  data: null,
+  load(){ try{ this.data = JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){ this.data=null; } },
+  save(){ localStorage.setItem(LS_KEY, JSON.stringify(this.data)); },
+  clear(){ localStorage.removeItem(LS_KEY); this.data=null; }
+};
+
+/* --- crude honest engine: estimates, not gospel (locked principle: bands, not numbers) --- */
+const ENG = {
+  mifflin(p){ // p: {sex,age,cm,kg}
+    const base = 10*p.kg + 6.25*p.cm - 5*p.age;
+    return Math.round(base + (p.sex==='m' ? 5 : -161));
+  },
+  actMult(days){ return Math.min(1.55, 1.30 + days*0.055); },
+  tdee(p){ return Math.round(this.mifflin(p) * this.actMult(p.daysPerWeek)); },
+  /* arrival window: weeks mid + spread that widens with distance (honest band) */
+  arrival(p){
+    const dk = Math.max(0, p.kg - p.goalKg);            // kg to lose (cut goal assumed)
+    const rate = p.kg * 0.005;                          // 0.5% BW / week — the honest rate
+    const wk = rate>0 ? dk/rate : 0;
+    const spread = Math.max(1.5, wk*0.22);              // ±22%, min 1.5wk
+    const d = w => { const t=new Date(); t.setDate(t.getDate()+Math.round(w*7));
+      return t.toLocaleDateString('en-US',{month:'short',day:'numeric'}); };
+    return { weeks:Math.round(wk), lo:d(wk-spread), hi:d(wk+spread),
+             conf: Math.max(35, Math.min(88, 92 - wk*1.1)) }; // confidence decays with horizon
+  },
+  deficit(p){ return Math.round(Math.min(700, Math.max(300, this.tdee(p)*0.22))); },
+  proteinTarget(p){ return Math.round(p.goalKg*2.1); }, // g/day, protein-first (YouTrain)
+  /* set-to-set adaptation (MacroFactor Workouts mechanic): RIR -> next load */
+  nextLoad(load, rir){
+    if(rir<=1) return Math.round((load+2.5)*2)/2;
+    if(rir>=3) return Math.max(0, Math.round((load-2.5)*2)/2);
+    return load;
+  }
+};
+
+function fmtDate(d){ return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* ============ router ============ */
+const routes = {}; // name -> {render(el), tab:bool}
+let curRoute = null;
+function go(name){
+  if(!routes[name]) name = store.data ? 'home' : 'quiz';
+  curRoute = name;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  let host = $('#r-'+name);
+  if(!host){
+    host = document.createElement('section');
+    host.className='screen'; host.id='r-'+name;
+    $('#routes').appendChild(host);
+  }
+  host.classList.add('active');
+  host.innerHTML='';
+  routes[name].render(host);
+  $('#tabbar').style.display = routes[name].tab ? 'flex' : 'none';
+  renderTabs(name);
+  location.hash = '#/'+name;
+}
+function renderTabs(active){
+  const tb=$('#tabbar');
+  if(tb.dataset.built) { tb.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.r===active)); return; }
+  tb.dataset.built='1';
+  const items=[
+    ['home','Home','<circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/>'],
+    ['train','Train','<path d="M4 12h3M17 12h3M7 8v8M17 8v8M7 12h10"/>'],
+    ['food','Food','<path d="M5 4v7a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V4M7 4v6M12 4v6M15 4c2 0 4 2 4 5s-2 5-4 5v6"/>'],
+    ['coach','Coach','<path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 4z"/><path d="M8 9h8M8 12h5"/>'],
+    ['you','You','<circle cx="12" cy="7.5" r="3.5"/><path d="M5 20c1-3.5 3.5-5.5 7-5.5s6 2 7 5.5"/>']
+  ];
+  tb.innerHTML = items.map(([r,l,ic])=>
+    `<button data-r="${r}" onclick="go('${r}')"><svg class="tic" viewBox="0 0 24 24">${ic}</svg>${l}</button>`).join('');
+  tb.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.r===active));
+}
+
+/* ============ QUIZ (BWS funnel: the quiz IS the onboarding) ============ */
+const QUIZ = { step:0, a:{ goal:'lose', sex:'m', age:38, cm:178, kg:96, goalKg:82, daysPerWeek:4, equip:'gym', injuries:[] } };
+routes['quiz'] = { tab:false, render(host){
+  const a=QUIZ.a;
+  const steps=[
+    { t:"What's the mission?", sub:"Pick the one that matters. You can change it later.", body:()=>`
+      <button class="pick ${a.goal==='lose'?'on':''}" onclick="qzSet('goal','lose')"><b>Lose the fat</b><span>Get to a lean body and stay there</span></button>
+      <button class="pick ${a.goal==='recomp'?'on':''}" onclick="qzSet('goal','recomp')"><b>Recomp</b><span>Lose fat and build muscle at once — slower, steadier</span></button>
+      <button class="pick ${a.goal==='build'?'on':''}" onclick="qzSet('goal','build')"><b>Build muscle</b><span>Strength first, scale second</span></button>` },
+    { t:"The honest numbers", sub:"This builds your expenditure estimate. Bands, not false precision.", body:()=>`
+      <div class="seg" id="qseg">
+        <button class="${a.sex==='m'?'on':''}" onclick="qzSeg('m')">Male</button>
+        <button class="${a.sex==='f'?'on':''}" onclick="qzSeg('f')">Female</button>
+      </div>
+      <div class="grid2">
+        <div><label class="lab">Age</label><input class="field" type="number" id="q_age" value="${a.age}"></div>
+        <div><label class="lab">Height (cm)</label><input class="field" type="number" id="q_cm" value="${a.cm}"></div>
+        <div><label class="lab">Weight (kg)</label><input class="field" type="number" step="0.1" id="q_kg" value="${a.kg}"></div>
+        <div><label class="lab">Goal (kg)</label><input class="field" type="number" step="0.1" id="q_goal" value="${a.goalKg}"></div>
+      </div>` },
+    { t:"Training days per week?", sub:"Be honest — the plan is built on this, not on wishes.", body:()=>{
+      const marks=[2,3,4,5,6];
+      return `<div class="display" style="text-align:center;" id="q_daysnum">${a.daysPerWeek}</div>
+      <div class="mut small" style="text-align:center;margin-bottom:8px;">days</div>
+      <input type="range" min="2" max="6" step="1" value="${a.daysPerWeek}" id="q_days"
+        oninput="qzDays(this.value)" style="--fill:${(a.daysPerWeek-2)/4*100}%">
+      <div class="row between tiny dim"><span>2</span><span>6</span></div>`; } },
+    { t:"Where do you train?", body:()=>`
+      <button class="pick ${a.equip==='gym'?'on':''}" onclick="qzSet('equip','gym')"><b>Full gym</b><span>Barbells, machines, cables</span></button>
+      <button class="pick ${a.equip==='home'?'on':''}" onclick="qzSet('equip','home')"><b>Home setup</b><span>Dumbbells, bench, bands</span></button>
+      <button class="pick ${a.equip==='min'?'on':''}" onclick="qzSet('equip','min')"><b>Minimal</b><span>Bodyweight + whatever's around</span></button>` },
+    { t:"Anything we should program around?", sub:"Injury-aware swaps are built in — not an afterthought.", body:()=>{
+      const opts=[['shoulder','Shoulder'],['lowback','Low back'],['knee','Knees'],['wrist','Wrists/grip'],['none','All good']];
+      return opts.map(([k,l])=>`<button class="pick ${a.injuries.includes(k)?'on':''}" onclick="qzInj('${k}')"><b>${l}</b></button>`).join(''); } },
+    { t:"Your plan is ready", reveal:true, body:()=>{
+      const p={sex:a.sex,age:a.age,cm:a.cm,kg:a.kg,goalKg:a.goalKg,daysPerWeek:a.daysPerWeek};
+      const tdee=ENG.tdee(p), arr=ENG.arrival(p), def=ENG.deficit(p), pro=ENG.proteinTarget(p);
+      return `<div class="card flat" style="text-align:center;padding:26px 18px;">
+        <div class="tiny dim">Estimated arrival at your goal</div>
+        <div class="display volt" style="margin:10px 0 4px;">${arr.lo} – ${arr.hi}</div>
+        <div class="mut small">~${arr.weeks} weeks · confidence band, not a promise</div>
+      </div>
+      <div class="statrow">
+        <div class="stat"><div class="v num">${tdee.toLocaleString()}</div><div class="k">Est. burn / day</div></div>
+        <div class="stat"><div class="v num">−${def}</div><div class="k">Daily deficit</div></div>
+        <div class="stat"><div class="v num">${pro}g</div><div class="k">Protein floor</div></div>
+      </div>
+      <div class="note">This engine re-measures you every week from your scale + your plate. No wearable guesses. The estimate gets sharper the longer you log — that's the whole trick.</div>`; } }
+  ];
+  const s=steps[QUIZ.step];
+  host.innerHTML=`
+    <div class="qfade" style="padding-top:8px;">
+      <div class="row between mb"><div class="tiny dim">STEP ${QUIZ.step+1} / ${steps.length}</div>
+        <div class="bar" style="width:120px;"><i style="width:${(QUIZ.step)/(steps.length-1)*100}%"></i></div></div>
+      <h2 style="font-size:26px;">${s.t}</h2>
+      ${s.sub?`<div class="mut small mt mb">${s.sub}</div>`:'<div class="mb"></div>'}
+      ${s.body()}
+      <div class="btnrow">
+        ${QUIZ.step>0?'<button class="btn ghost" style="width:96px;" onclick="qzBack()">Back</button>':''}
+        <button class="btn" onclick="qzNext(${s.reveal?'true':'false'})">${s.reveal?'See pricing':'Continue'}</button>
+      </div>
+    </div>`;
+}};
+window.qzSet=(k,v)=>{QUIZ.a[k]=v; go('quiz');};
+window.qzSeg=(v)=>{QUIZ.a.sex=v; go('quiz');};
+window.qzDays=(v)=>{QUIZ.a.daysPerWeek=+v; $('#q_daysnum').textContent=v;
+  $('#q_days').style.setProperty('--fill',(v-2)/4*100+'%');};
+window.qzInj=(k)=>{ const a=QUIZ.a.injuries;
+  if(k==='none'){QUIZ.a.injuries=['none'];}
+  else{ const i=a.indexOf(k); i>=0?a.splice(i,1):a.push(k);
+    const ni=a.indexOf('none'); if(ni>=0&&a.length>1)a.splice(ni,1); }
+  go('quiz'); };
+window.qzBack=()=>{ QUIZ.step=Math.max(0,QUIZ.step-1); go('quiz'); };
+window.qzNext=(final)=>{
+  if(QUIZ.step===1){ // harvest stats
+    ['age','cm','kg','goal'].forEach(k=>{ const el=$('#q_'+k); if(el) QUIZ.a[k==='goal'?'goalKg':k]=parseFloat(el.value)||QUIZ.a[k==='goal'?'goalKg':k]; });
+    if(QUIZ.a.goalKg>=QUIZ.a.kg && QUIZ.a.goal==='lose'){ toast('Goal below current weight — flip the goal or the mission'); return; }
+  }
+  if(final){ commitProfile(); go('paywall'); return; }
+  QUIZ.step++; go('quiz');
+};
+function commitProfile(){
+  const a=QUIZ.a;
+  store.data={ onboarded:true, ts:Date.now(),
+    profile:{sex:a.sex,age:a.age,cm:a.cm,kg:a.kg,goalKg:a.goalKg,daysPerWeek:a.daysPerWeek,equip:a.equip,injuries:a.injuries,goal:a.goal},
+    weights:seedWeights(a.kg), foods:[], plan:buildPlan(a), checkins:[], tier:null };
+  store.save();
+}
+function seedWeights(kg){ // sample history until real check-ins replace it (LABELED sample in UI)
+  const out=[]; const now=new Date();
+  for(let i=4;i>=1;i--){ const d=new Date(now); d.setDate(d.getDate()-i*7);
+    out.push({d:d.toISOString().slice(0,10), kg:Math.round((kg + i*0.35 + (i%2)*0.2)*10)/10, sample:true}); }
+  return out;
+}
+function buildPlan(a){ // "Full Body A" prescription, loads % of BW as demo defaults
+  const kg=a.kg, f=a.equip==='min'?0.35:(a.equip==='home'?0.6:1);
+  const inj=a.injuries||[];
+  const mv=(name,bw,reps,inj,swap)=>({name,kg:Math.max(0,Math.round(kg*bw*f/2.5)*2.5),reps,sets:4,inj,swap,done:[],rirs:[]});
+  return { name:'Full Body A', moves:[
+    mv(inj.includes('knee')?'Leg Press (knee-swap)':'Back Squat',1.0,'6', 'knee','Leg Press'),
+    mv(inj.includes('shoulder')?'Incline DB Press (shoulder-swap)':'Bench Press',0.72,'8','shoulder','Incline DB Press'),
+    mv('Chest-Supported Row',0.6,'10'),
+    mv(inj.includes('lowback')?'Hip Thrust (low-back-swap)':'Romanian Deadlift',0.85,'8','lowback','Hip Thrust'),
+    mv('Farmer Carry',0.5,'40m')
+  ]};
+}
+
+/* ============ PAYWALL — pay-what-you-can prototype ============ */
+routes['paywall'] = { tab:false, render(host){
+  const arr = ENG.arrival(store.data.profile);
+  store.data.tier = store.data.tier ?? 'fair';
+  const T=[
+    ['zero','0','$0','Sponsored','Paid for by the member pool. No card, no guilt — pay it forward when you can.',''],
+    ['fair','5.99','$5.99','Fair price','What it costs to run, plus a little. Anchored at what MacroFactor charges.',''],
+    ['sup','11.99','$11.99','Supporter','Covers you + chips into the sponsored pool.','MOST HONEST'],
+    ['patron','19','$19','Patron','Funds two sponsored spots outright. You legend.','']
+  ];
+  host.innerHTML=`
+    <div style="padding-top:10px;">
+      <span class="chip"><span class="dot"></span>YOUR PLAN: ${arr.weeks} WEEKS → ${store.data.profile.goalKg} kg</span>
+      <h2 style="font-size:29px;margin:14px 0 4px;">Pay what you can.</h2>
+      <div class="mut small mb">Seriously. Full app at every level — no features held hostage. The tiers exist so broke people train free and flush people cover them.</div>
+      <div class="seg sm mb" id="cycleseg">
+        <button class="on" onclick="pwCycle(this,'mo')">Monthly</button>
+        <button onclick="pwCycle(this,'yr')">Annual − 2 months free</button>
+      </div>
+      <div id="tiers"></div>
+      <button class="btn mt" onclick="pwGo()">Start — demo, no charge</button>
+      <div class="note">Real version: sliders like this need web checkout (Apple IAP only allows fixed price points — so in-app it ships as tier buttons like these). Cancel anytime, keep your data forever. It lives on this device anyway.</div>
+    </div>`;
+  drawTiers(T,'mo');
+}};
+window.pwCycle=(btn,cy)=>{ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); drawTiers(window._T, cy); };
+function drawTiers(T,cy){
+  T = T || [['zero','0','$0','Sponsored','Paid for by the member pool. No card, no guilt.',''],
+    ['fair','5.99','$5.99','Fair price','What it costs to run, plus a little.',''],
+    ['sup','11.99','$11.99','Supporter','Covers you + chips into the sponsored pool.','MOST HONEST'],
+    ['patron','19','$19','Patron','Funds two sponsored spots outright. You legend.','']];
+  window._T=T;
+  $('#tiers').innerHTML = T.map(([k,mo,sym,name,desc,tag])=>{
+    const price = cy==='yr' && mo!=='0' ? '$'+(Math.round(parseFloat(mo)*10)) : sym;
+    const per = mo==='0' ? '' : (cy==='yr'?'<small>/yr</small>':'<small>/mo</small>');
+    return `<button class="tier ${store.data.tier===k?'on':''}" onclick="pwTier('${k}')">
+      <div class="amt">${price}${per}</div>
+      <div class="grow"><b>${name}</b>${tag?`<span class="tag">${tag}</span>`:''}
+        <div class="mut small" style="margin-top:2px;">${desc}</div></div>
+      <div class="radio"></div></button>`;
+  }).join('');
+}
+window.pwTier=(k)=>{ store.data.tier=k; store.save();
+  document.querySelectorAll('.tier').forEach(t=>t.classList.remove('on'));
+  event.currentTarget.classList.add('on'); };
+window.pwGo=()=>{ store.save(); toast('Tier noted. Nobody was charged — this is a demo.'); go('home'); };
+
+/* ============ HOME ============ */
+routes['home'] = { tab:true, render(host){
+  const p=store.data.profile, arr=ENG.arrival(p), tdee=ENG.tdee(p);
+  const pro=ENG.proteinTarget(p);
+  const todays = todayTotals();
+  const ring = Math.min(1, todays.p/pro);
+  const ringOff = 251*(1-ring);
+  const lastKg = store.data.weights[store.data.weights.length-1].kg;
+  host.innerHTML=`
+    <div class="hero" id="hero">
+      <img id="figimg" src="img/dream-body.jpg" alt="goal-body stand-in figure">
+      <div class="stagechip" id="figchip">DREAM · ${p.goalKg} kg</div>
+      <div class="stagepanel">
+        <div class="scrubrow">
+          <button class="stop" data-s="then" onclick="figStop('then')"><span class="k">Then</span><span class="v">${p.kg}</span></button>
+          <button class="stop now" data-s="now" onclick="figStop('now')"><span class="k">Now</span><span class="v">${lastKg}</span></button>
+          <button class="stop sel" data-s="dream" onclick="figStop('dream')"><span class="k">Dream</span><span class="v">${p.goalKg}</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="trainerline"><span class="volt">✦</span> Hold me — I train you until you match my specs.</div>
+    <div class="tiny dim" style="margin:0 4px 4px;">stand-in figures tonight — the real ones render from your photos</div>
+    <div class="card" style="text-align:center;">
+      <div class="tiny dim">ARRIVAL WINDOW · ${p.goal==='lose'?'FAT LOSS':'GOAL'}</div>
+      <div class="display volt" style="margin:12px 0 6px;">${arr.lo}<span class="dim"> → </span>${arr.hi}</div>
+      <div class="mut small">~${arr.weeks} weeks out · ${Math.round(arr.conf)}% confidence band — gets narrower every check-in</div>
+      <div class="bar mt" style="height:8px;"><i style="width:${arr.conf}%;"></i></div>
+    </div>
+    <div class="row" style="align-items:stretch;">
+      <div class="card grow" style="text-align:center;">
+        <div style="position:relative;width:96px;margin:0 auto;">
+          <svg class="ring" width="96" height="96" viewBox="0 0 96 96">
+            <circle class="trk" cx="48" cy="48" r="40" fill="none" stroke-width="9"/>
+            <circle class="val" cx="48" cy="48" r="40" fill="none" stroke-width="9" style="--ring-off:${ringOff}"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div class="num" style="font-size:19px;line-height:1;">${Math.round(todays.p)}<span class="dim" style="font-size:12px;">/${pro}g</span></div>
+            <div class="k tiny dim" style="margin-top:4px;">PROTEIN</div>
+          </div>
+        </div>
+      </div>
+      <div class="grow">
+        <div class="card flat" style="margin:0 0 10px;height:calc(50% - 5px);display:flex;flex-direction:column;justify-content:center;">
+          <div class="k tiny dim">MEASURED BURN</div>
+          <div class="num" style="font-size:22px;">${tdee.toLocaleString()} <span class="dim small">kcal</span></div>
+          <div class="tiny dim">from scale + plate, not a wrist guess</div>
+        </div>
+        <div class="card flat" style="margin:0;height:calc(50% - 5px);display:flex;flex-direction:column;justify-content:center;">
+          <div class="k tiny dim">MUSCLE STATUS</div>
+          <div class="num" style="font-size:22px;color:var(--ok);">HOLDING</div>
+          <div class="tiny dim">protein on target · 2+ strength days</div>
+        </div>
+      </div>
+    </div>
+    <div class="btnrow">
+      <button class="btn" onclick="go('train')">Train — ${store.data.plan.name}</button>
+    </div>
+    <div class="btnrow">
+      <button class="btn ghost" onclick="go('food')">Log food</button>
+      <button class="btn ghost" onclick="go('checkin')">Check-in</button>
+    </div>
+    <div class="note">Avatar-first home (YouTrain lock) + honest-ETA hero + measured burn + muscle status — all off one crude loop.</div>`;
+}};
+window.figStop=(s)=>{
+  const img=$('#figimg'), hero=$('#hero'), chip=$('#figchip');
+  const p=store.data.profile, lastKg=store.data.weights[store.data.weights.length-1].kg;
+  const map={then:{src:'img/today.jpg',mute:true,label:'THEN · '+p.kg+' kg'},
+             now:{src:'img/today.jpg',mute:false,label:'NOW · '+lastKg+' kg'},
+             dream:{src:'img/dream-body.jpg',mute:false,label:'DREAM · '+p.goalKg+' kg'}};
+  const m=map[s];
+  img.style.opacity=0;
+  setTimeout(()=>{ img.src=m.src; hero.classList.toggle('muted',!!m.mute);
+    chip.textContent=m.label; img.style.opacity=1; },180);
+  document.querySelectorAll('#hero .stop').forEach(b=>b.classList.toggle('sel',b.dataset.s===s));
+};
+
+/* --- food totals helper (used by home + food) --- */
+function todayTotals(){
+  const today=new Date().toISOString().slice(0,10);
+  const f=(store.data?.foods||[]).filter(x=>x.d===today);
+  return f.reduce((a,x)=>({k:a.k+x.kcal,p:a.p+x.p,c:a.c+x.c,fa:a.fa+x.fa}),{k:0,p:0,c:0,fa:0});
+}
+</script>
+<script>
+/* ============ TRAIN (BWS prescription + MacroFactor set-to-set adaptation) ============ */
+let RIR_CTX=null;
+routes['train'] = { tab:true, render(host){
+  const plan=store.data.plan;
+  const doneCount=plan.moves.reduce((n,m)=>n+m.done.length,0);
+  const totalSets=plan.moves.reduce((n,m)=>n+m.sets,0);
+  host.innerHTML=`
+    <div class="row between mb">
+      <div><h2 style="font-size:24px;">${plan.name}</h2>
+      <div class="mut small">Prescribed for you · targets adjust as you log effort</div></div>
+      <span class="chip">${doneCount}/${totalSets} sets</span>
+    </div>
+    ${plan.moves.map((m,mi)=>`
+      <div class="exrow" id="ex-${mi}">
+        <div style="min-width:0;">
+          <div style="font-weight:700;font-size:15px;">${m.name}</div>
+          <div class="mut small" id="exhint-${mi}">${trainHint(m)}</div>
+          ${m.swap&&!m.inj?`<div class="tiny dim">swap available: ${m.swap}</div>`:''}
+        </div>
+        <div class="sets">
+          ${Array.from({length:m.sets},(_,si)=>{
+            const done=m.done.includes(si);
+            const isNext=!done && m.done.length===si;
+            return `<button class="setc ${done?'done':''} ${isNext?'next':''}" onclick="setTap(${mi},${si})">
+              <small>SET</small>${si+1}</button>`;}).join('')}
+        </div>
+      </div>`).join('')}
+    <div class="btnrow">
+      <button class="btn sub" onclick="resetWorkout()">Reset session</button>
+      <button class="btn" onclick="finishWorkout()">Finish workout</button>
+    </div>
+    <div class="note">Tap a set when it's done, tell the RIR truth, and the next set's load adjusts — that's the MacroFactor Workouts mechanic, minus the paywall.</div>`;
+}};
+function trainHint(m){
+  const next=m.done.length;
+  if(next>=m.sets) return `${m.kg} kg × ${m.reps} · all sets logged`;
+  let kg=m.kg;
+  // replay RIR adaptations up to the next set
+  for(let i=0;i<m.rirs.length;i++) kg=ENG.nextLoad(kg,m.rirs[i]);
+  return `Set ${next+1}: ${kg} kg × ${m.reps}` + (m.rirs.length? ` · adapted from ${m.kg}`:'');
+}
+window.setTap=(mi,si)=>{
+  const m=store.data.plan.moves[mi];
+  if(m.done.includes(si)){ // allow undo
+    m.done=m.done.filter(x=>x!==si);
+    m.rirs=m.rirs.slice(0,m.done.length);
+    store.save(); go('train'); return;
+  }
+  if(m.done.length!==si){ toast('Log sets in order — effort data lies otherwise'); return; }
+  RIR_CTX={mi,si};
+  $('#rirtitle').textContent=`${m.name} — set ${si+1} logged`;
+  $('#rirops').innerHTML=[0,1,2,3,4].map(r=>
+    `<button onclick="rirPick(${r})">${r}${r===4?'+':''}</button>`).join('');
+  $('#rirsheet').classList.add('open');
+};
+window.rirPick=(r)=>{
+  const {mi,si}=RIR_CTX; const m=store.data.plan.moves[mi];
+  m.done.push(si); m.rirs.push(r); store.save();
+  $('#rirsheet').classList.remove('open');
+  go('train');
+  const nh=$('#exhint-'+mi);
+  if(nh && m.done.length<m.sets){ nh.classList.remove('num'); void nh.offsetWidth; nh.classList.add('num');
+    nh.style.animation='countflash .8s'; setTimeout(()=>nh.style.animation='',850); }
+  if(r<=1) toast('Strong set — next target went up ⬆');
+  else if(r>=3) toast('Noted — next target backed off ⬇');
+};
+window.resetWorkout=()=>{ store.data.plan.moves.forEach(m=>{m.done=[];m.rirs=[];}); store.save(); go('train'); };
+window.finishWorkout=()=>{
+  const plan=store.data.plan;
+  const done=plan.moves.reduce((n,m)=>n+m.done.length,0);
+  const total=plan.moves.reduce((n,m)=>n+m.sets,0);
+  toast(done===total ? 'Session in the bank. The engine saw everything.' : `Logged ${done}/${total} — partial sessions count as data too`);
+  go('home');
+};
+$('#rirsheet').addEventListener('click',e=>{ if(e.target.id==='rirsheet') $('#rirsheet').classList.remove('open'); });
+
+/* ============ FOOD (BWS photo scan mock + protein-first logging) ============ */
+routes['food'] = { tab:true, render(host){
+  const p=store.data.profile, pro=ENG.proteinTarget(p), tdee=ENG.tdee(p);
+  const budget=tdee-ENG.deficit(p);
+  const t=todayTotals();
+  const today=new Date().toISOString().slice(0,10);
+  const items=(store.data.foods||[]).filter(x=>x.d===today);
+  const pct=(v,m)=>Math.min(100,Math.round(v/m*100));
+  host.innerHTML=`
+    <h2 style="font-size:24px;margin-bottom:4px;">Food</h2>
+    <div class="mut small mb">Protein is the hero. The rest keeps score.</div>
+    <div class="card">
+      <div class="row between mb"><b>Today</b><span class="num mut small">${Math.round(t.k).toLocaleString()} / ${budget.toLocaleString()} kcal</span></div>
+      <div class="macroline"><span class="lab2">Protein</span>
+        <div class="bar grow tall"><i style="width:${pct(t.p,pro)}%"></i></div>
+        <span class="val">${Math.round(t.p)}g</span></div>
+      <div class="macroline"><span class="lab2">Carbs</span>
+        <div class="bar grow"><i style="width:${pct(t.c,Math.round(budget*0.35/4))}%;background:var(--warn)"></i></div>
+        <span class="val">${Math.round(t.c)}g</span></div>
+      <div class="macroline"><span class="lab2">Fat</span>
+        <div class="bar grow"><i style="width:${pct(t.fa,Math.round(budget*0.28/9))}%;background:var(--ok)"></i></div>
+        <span class="val">${Math.round(t.fa)}g</span></div>
+    </div>
+    <button class="btn" onclick="scanMeal()">📷 Scan a meal — AI estimate (demo)</button>
+    <div class="grid2 mt">
+      <button class="btn sub" onclick="quickAdd('Protein shake',320,50,8,5)">+ Shake · 50g P</button>
+      <button class="btn sub" onclick="quickAdd('Chicken bowl',620,48,60,14)">+ Chicken bowl</button>
+      <button class="btn sub" onclick="quickAdd('Eggs + toast',410,26,30,18)">+ Eggs</button>
+      <button class="btn sub" onclick="quickAdd('Snack-ish',250,8,28,12)">+ Snack</button>
+    </div>
+    ${items.length?`<div class="card flat"><div class="tiny dim mb">LOGGED TODAY</div>
+      ${items.map(x=>`<div class="row between small" style="padding:5px 0;">
+        <span>${x.name}${x.est?' <span class="dim">· est.</span>':''}</span>
+        <span class="num mut">${x.kcal} kcal · ${x.p}g P</span></div>`).join('')}</div>`:''}
+    <div class="note">Photo scan returns a labeled <b>estimate</b> — the closed loop absorbs small errors, so honesty beats precision. Estimates show as <b>est.</b> forever. Nothing uploads; the photo never leaves the phone.</div>`;
+}};
+window.scanMeal=()=>{
+  const demos=[['Burrito bowl',640,42,68,21],['Salmon + rice',560,40,52,18],['Steak + potatoes',720,55,45,32],['Greek yogurt + berries',280,24,22,6]];
+  const pick=demos[Math.floor(Math.random()*demos.length)];
+  addFood(pick[0],pick[1],pick[2],pick[3],pick[4],true);
+  toast('Photo read — estimate filed. Weigh-ins will correct any drift.');
+};
+window.quickAdd=(n,k,p,c,f)=>{ addFood(n,k,p,c,f,false); toast(k+' kcal · '+p+'g protein logged'); };
+function addFood(name,kcal,p,c,fa,est){
+  store.data.foods.push({d:new Date().toISOString().slice(0,10),name,kcal,p,c,fa,est});
+  store.save(); go('food');
+}
+
+/* ============ CHECK-IN (MacroFactor weekly re-measure) ============ */
+routes['checkin'] = { tab:true, render(host){
+  const p=store.data.profile;
+  const w=store.data.weights;
+  const last=w[w.length-1], first=w[0];
+  const tdee=ENG.tdee(p);
+  const wkRate=(first.kg-last.kg)/Math.max(1,(w.length-1)); // kg/wk avg
+  const target=p.kg*0.005;
+  const drift=wkRate-target; // + = losing too fast, − = too slow
+  const adj = w.length>=2 ? (Math.abs(drift)<target*0.25 ? 0 : (drift<0?-110:+90)) : 0;
+  host.innerHTML=`
+    <h2 style="font-size:24px;margin-bottom:4px;">Weekly check-in</h2>
+    <div class="mut small mb">The re-measure. This is where the estimate gets honest.</div>
+    <div class="card">
+      ${sparkSVG(w)}
+      <div class="row between tiny dim mt"><span>5 wks ago</span><span>trend, not any single morning</span><span>today</span></div>
+      ${w.some(x=>x.sample)?'<div class="tiny dim mt">earlier points are sample data — they age out as your real check-ins land</div>':''}
+    </div>
+    <div class="statrow">
+      <div class="stat"><div class="v num">${last.kg}</div><div class="k">Latest kg</div></div>
+      <div class="stat"><div class="v num ${wkRate>0?'volt':''}">${wkRate>0?'−':'+'}${Math.abs(wkRate).toFixed(2)}</div><div class="k">kg / week</div></div>
+      <div class="stat"><div class="v num">−${target.toFixed(2)}</div><div class="k">Target rate</div></div>
+    </div>
+    <div class="card flat mt">
+      <div class="tiny dim">MEASURED EXPENDITURE</div>
+      <div class="row between mt">
+        <div><span class="num" style="font-size:26px;">≈ ${tdee.toLocaleString()}</span> <span class="mut small">kcal/day</span></div>
+        <div class="chip"><span class="dot"></span>measured, not guessed</div>
+      </div>
+      <div class="note" style="padding:8px 0 0;">Back-calculated from what you ate × what the scale did — MacroFactor's core trick. Watches estimate burn badly, so we don't ask them to.</div>
+    </div>
+    <div class="card">
+      <div class="tiny dim">NEXT WEEK'S PLAN</div>
+      ${adj===0
+        ? `<div class="mt small">Trend is inside the band — <b>nothing changes</b>. Same calories, same deficit. Boring is the product working.</div>`
+        : `<div class="mt small">Trend is ${adj<0?'slower':'faster'} than the honest rate → calories <b class="num">${adj>0?'+':'−'}${Math.abs(adj)}</b>/day next week. Small moves, re-measured in 7 days.</div>`}
+      <div class="seg sm mt">
+        <button class="on">Coached</button><button>Collaborative</button><button>Manual</button>
+      </div>
+    </div>
+    <label class="lab">Log this morning's weight (kg)</label>
+    <div class="row">
+      <input class="field grow" type="number" step="0.1" id="ci_kg" placeholder="${last.kg}">
+      <button class="btn" style="width:110px;" onclick="logWeight()">Log</button>
+    </div>
+    <div style="height:10px"></div>`;
+}};
+function sparkSVG(w){
+  const W=340,H=80,P=8;
+  const kgs=w.map(x=>x.kg), lo=Math.min(...kgs)-0.4, hi=Math.max(...kgs)+0.4;
+  const X=i=>P+i*(W-2*P)/(Math.max(1,w.length-1));
+  const Y=v=>H-P-(v-lo)/(hi-lo)*(H-2*P);
+  const pts=w.map((x,i)=>[X(i),Y(x.kg)]);
+  const path=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const bandTop=pts[0][1]-4, bandBot=pts[pts.length-1][1]+4;
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <rect class="band" x="${P}" y="${Math.min(bandTop,bandBot)}" width="${W-2*P}" height="${Math.abs(bandBot-bandTop)+8}"/>
+    <path class="ln" d="${path}"/>
+    ${pts.map(p=>`<circle class="pt" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2"/>`).join('')}
+  </svg>`;
+}
+window.logWeight=()=>{
+  const v=parseFloat($('#ci_kg').value);
+  if(!v||v<40||v>250){ toast('That number looks off — try again'); return; }
+  store.data.weights.push({d:new Date().toISOString().slice(0,10),kg:v});
+  store.save();
+  toast('Logged. The band just got a little narrower.');
+  go('checkin');
+};
+
+/* ============ COACH (Jeremy-AI analog — canned, honest, engine-aware) ============ */
+routes['coach'] = { tab:true, render(host){
+  host.innerHTML=`
+    <h2 style="font-size:24px;margin-bottom:4px;">Coach</h2>
+    <div class="mut small mb">Answers from your actual numbers. Demo uses canned lines — the real one reads the engine.</div>
+    <div class="chatscroll" id="chat">
+      <div class="chatb coach">You're ~${ENG.arrival(store.data.profile).weeks} weeks out on the honest math. Ask me anything the engine can see.</div>
+    </div>
+    <div class="row wrap" style="gap:8px;">
+      ${["Why did my calories change?","I'm stalling — panic?","Can I swap an exercise?","Why is protein the hero?","What happens at goal weight?"].map(q=>
+        `<button class="chip" onclick="ask('${q}')">${q}</button>`).join('')}
+    </div>`;
+}};
+window.ask=(q)=>{
+  const p=store.data.profile;
+  const A={
+    "Why did my calories change?": `Your burn is <b>measured weekly</b>: food logged × scale trend → real expenditure. When last week's trend ran hot or cold, targets move ${'~'}100 kcal. It's not mood — it's arithmetic. In Coached mode it just happens; Collaborative asks you first.`,
+    "I'm stalling — panic?": `No. A "stall" is usually water lying to the scale for 7–10 days. The band in your check-in chart exists for exactly this: trend inside band = <b>nothing changes</b>. We adjust on 2+ weeks of real drift, never on one bad Tuesday.`,
+    "Can I swap an exercise?": `Any move with an ache has a mapped swap — your plan already did it where you flagged ${p.injuries.filter(i=>i!=='none').join(', ')||'nothing'}. Same muscle, friendlier joint. The load prescription carries over.`,
+    "Why is protein the hero?": `Because the goal isn't weight loss — it's <b>fat loss with muscle intact</b>. ${ENG.proteinTarget(p)}g/day + lifting tells your body which tissue to burn. That's the whole muscle-preservation play, and it's why the score on Home says HOLDING.`,
+    "What happens at goal weight?": `The part no other app builds: <b>maintenance, for the decade</b>. Targets flip from deficit to your measured burn, the band becomes the guardrail, and drift gets caught at 3 days — not at +9 kg. Arriving is the beginning of the product, not the end.`
+  };
+  const c=$('#chat');
+  c.insertAdjacentHTML('beforeend',`<div class="chatb you">${q}</div><div class="chatb coach">${A[q]}</div>`);
+  c.scrollTop=c.scrollHeight;
+};
+
+/* ============ YOU (the decade — YouTrain maintenance engine) ============ */
+routes['you'] = { tab:true, render(host){
+  const p=store.data.profile, arr=ENG.arrival(p);
+  const created=new Date(store.data.ts);
+  host.innerHTML=`
+    <h2 style="font-size:24px;margin-bottom:4px;">You, over time</h2>
+    <div class="mut small mb">Day 0: ${fmtDate(created)} — the origin never leaves.</div>
+    <div class="card">
+      <div class="row between tiny dim"><span>THEN</span><span>NOW</span><span>GOAL</span><span>THE DECADE</span></div>
+      <svg viewBox="0 0 340 90" class="mt" style="width:100%;">
+        <rect x="235" y="18" width="98" height="54" rx="8" fill="rgba(216,255,61,.08)"/>
+        <line x1="20" y1="30" x2="120" y2="42" stroke="var(--dim)" stroke-width="2"/>
+        <line x1="120" y1="42" x2="235" y2="60" stroke="var(--acc)" stroke-width="2.5"/>
+        <line x1="235" y1="60" x2="333" y2="60" stroke="var(--ok)" stroke-width="2.5" stroke-dasharray="5 5"/>
+        <circle cx="20" cy="30" r="4" fill="var(--dim)"/><circle cx="120" cy="42" r="4.5" fill="var(--acc)"/>
+        <circle cx="235" cy="60" r="4.5" fill="var(--ink)"/>
+        <text x="20" y="18" fill="var(--dim)" font-size="10" font-weight="700">${p.kg} kg</text>
+        <text x="110" y="58" fill="var(--acc)" font-size="10" font-weight="700">${(p.kg-0.6).toFixed(1)}</text>
+        <text x="222" y="80" fill="var(--ink)" font-size="10" font-weight="700">${p.goalKg} kg</text>
+      </svg>
+      <div class="tiny dim" style="margin-top:6px;">goal band = ±3% · <b style="color:var(--ok);">weeks-in-band</b> is the hero metric of the decade</div>
+    </div>
+    <div class="grid2">
+      <div class="stat"><div class="v num">${arr.weeks}</div><div class="k">Weeks to arrival (mid)</div></div>
+      <div class="stat"><div class="v num">0</div><div class="k">Weeks in band — starts at goal</div></div>
+    </div>
+    <div class="card mt">
+      <div class="row between"><b>Drift alarm</b><span class="chip" onclick="driftDemo()"><span class="dot" style="background:var(--warn);"></span>demo</span></div>
+      <div class="note" style="padding:8px 0 2px;" id="driftmsg">In maintenance, 3 days above the band top pings you while it's still a nudge — not at +9 kg when it's a crisis. ~80% of regain is a detection problem.</div>
+    </div>
+    <div class="card flat">
+      <div class="tiny dim">THE BET</div>
+      <div class="small mt" style="line-height:1.55;">Every tracker on the store optimizes the <i>cut</i>. This one is built so that arriving at ${p.goalKg} kg is <b>chapter 1 of the maintenance decade</b> — honest band, weekly re-measure, drift caught early. That's the part BWS and MacroFactor don't ship.</div>
+    </div>
+    <button class="btn ghost mt" onclick="wipeDemo()">Reset demo (wipe device data)</button>`;
+}};
+window.driftDemo=()=>{ $('#driftmsg').innerHTML='<b style="color:var(--warn);">Demo ping:</b> "Scale\'s been 1.1% over band for 3 days. Not a crisis — a Tuesday fix: protein + a walk, re-check Friday."'; };
+window.wipeDemo=()=>{ if(confirm('Wipe FRANKENFIT demo data on this device?')){ store.clear(); QUIZ.step=0; location.hash=''; go('quiz'); } };
+
+/* ============ boot ============ */
+store.load();
+const params=new URLSearchParams(location.search);
+if(params.get('demo')==='1' && !(store.data && store.data.onboarded)){ commitProfile(); }
+const startRoute=(location.hash||'').replace('#/','');
+go(store.data && store.data.onboarded ? (routes[startRoute]?startRoute:'home') : 'quiz');
+window.addEventListener('hashchange',()=>{ const r=(location.hash||'').replace('#/',''); if(r!==curRoute) go(r); });
+</script>
+</body>
+</html>
