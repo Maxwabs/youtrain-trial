@@ -32,6 +32,7 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
 h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.02em;}
 .display{font-size:44px;font-weight:800;letter-spacing:-.03em;line-height:1;
   font-variant-numeric:tabular-nums;}
+.display.md{font-size:34px;}
 .num{font-variant-numeric:tabular-nums;font-weight:700;}
 .mut{color:var(--mut);} .dim{color:var(--dim);}
 .small{font-size:13px;} .tiny{font-size:11px;letter-spacing:.06em;text-transform:uppercase;}
@@ -85,6 +86,8 @@ label.lab{display:block;font-size:11px;font-weight:700;letter-spacing:.07em;
 .seg button{flex:1;border:none;background:transparent;color:var(--mut);
   padding:10px;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;}
 .seg button.on{background:var(--acc);color:var(--acc-ink);}
+.seg.sm{padding:3px;}
+.seg.sm button{padding:8px 6px;font-size:11px;}
 .seg.sm button.on{background:var(--surf);color:var(--ink);}
 
 input[type=range]{width:100%;appearance:none;height:44px;background:transparent;}
@@ -92,6 +95,7 @@ input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:99px;
   background:linear-gradient(to right,var(--acc) var(--fill,50%),var(--surf2) var(--fill,50%));}
 input[type=range]::-webkit-slider-thumb{appearance:none;width:26px;height:26px;border-radius:99px;
   background:var(--ink);margin-top:-10px;box-shadow:0 2px 10px rgba(0,0,0,.5);}
+input[type=range].grey{opacity:.45;}
 
 .ring{transform:rotate(-90deg);}
 .ring .trk{stroke:#232A34;}
@@ -119,10 +123,26 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:26px;height:26px;b
 .sets{display:flex;gap:8px;margin-left:auto;}
 .setc{width:44px;height:44px;border-radius:14px;background:var(--surf2);
   border:1px solid var(--line);color:var(--ink);font-weight:700;font-size:13px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;}
+  display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;flex:none;}
 .setc.done{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);animation:pop .3s;}
 .setc small{font-size:8px;font-weight:800;color:inherit;opacity:.65;}
 .setc.next{border-color:var(--acc);border-style:dashed;}
+
+.muschip{display:inline-flex;padding:4px 9px;border-radius:99px;
+  background:rgba(216,255,61,.09);border:1px solid rgba(216,255,61,.22);
+  color:var(--acc);font-size:10px;font-weight:700;letter-spacing:.04em;}
+.musrow{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0 0;}
+.avsq{width:46px;height:46px;border-radius:14px;object-fit:cover;object-position:top;
+  border:1px solid var(--line);flex:none;}
+
+.injcard{background:var(--surf2);border:1px solid var(--line);border-radius:16px;
+  padding:14px;margin:10px 0;}
+.injcard .seg{margin:6px 0;}
+.lab2{display:block;font-size:10px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--dim);margin:10px 2px 4px;}
+.micb{width:46px;height:46px;border-radius:14px;background:var(--surf2);
+  border:1px solid var(--line);font-size:20px;cursor:pointer;flex:none;line-height:1;}
+.micb:active{background:var(--acc);}
 
 .rirsheet{position:fixed;inset:0;background:rgba(5,6,8,.6);backdrop-filter:blur(8px);
   display:none;align-items:flex-end;justify-content:center;z-index:60;}
@@ -148,6 +168,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:26px;height:26px;b
 .chatb.coach{background:var(--surf2);border-bottom-left-radius:6px;}
 .chatb.coach b{color:var(--acc);}
 .chatscroll{height:230px;overflow:auto;padding:6px 2px;}
+.coachin{display:flex;gap:8px;margin-top:12px;align-items:center;}
 
 .tabbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tab-h) + env(safe-area-inset-bottom));
   padding-bottom:env(safe-area-inset-bottom);
@@ -193,6 +214,9 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:26px;height:26px;b
 .stop.now .v{color:var(--acc);}
 .stop.sel{background:rgba(216,255,61,.12);}
 .trainerline{margin:2px 4px 4px;font-size:14px;font-weight:600;color:var(--ink);}
+.hero.scrub{height:340px;}
+.projchip{position:absolute;top:12px;right:12px;z-index:3;font-size:10px;font-weight:800;
+  letter-spacing:.06em;color:var(--acc-ink);background:var(--acc);border-radius:99px;padding:6px 11px;text-align:right;}
 .footer-tag{text-align:center;color:var(--dim);font-size:9px;letter-spacing:.08em;
   text-transform:uppercase;margin-top:22px;font-weight:700;}
 </style>
@@ -201,7 +225,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:26px;height:26px;b
 <div id="app">
   <div class="topbar">
     <div class="brand">FRANKEN<em>FIT</em></div>
-    <div class="demopill">HYBRID V2 · STAND-INS + DEMO DATA</div>
+    <div class="demopill">HYBRID V3 · STAND-INS + DEMO DATA</div>
   </div>
   <main id="routes"></main>
   <div class="footer-tag">stitched from the best · on-device only</div>
@@ -222,7 +246,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:26px;height:26px;b
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('spike-ff-sw.js').catch(()=>{}); }
 </script>
 <script>
-/* ============ FRANKENFIT spike — engine + data ============ */
+/* ============ FRANKENFIT hybrid v0.3 — engine + data ============ */
 const $ = s => document.querySelector(s);
 const LS_KEY = 'frankenfit.v1';
 
@@ -233,27 +257,96 @@ const store = {
   clear(){ localStorage.removeItem(LS_KEY); this.data=null; }
 };
 
+/* migration: older profiles get the new fields with honest defaults */
+function normalizeData(d){
+  if(!d || !d.profile) return d;
+  const p=d.profile;
+  if(p.bf===undefined) p.bf=null;
+  if(!p.approach) p.approach='protein';
+  if(!p.mode) p.mode='full';          // 'full' = log everything · 'min' = scale-first
+  if(!p.injdetail){
+    p.injdetail=(p.injuries||[]).filter(x=>x!=='none')
+      .map(part=>({part,side:'',what:'',ago:'',status:'light',notes:''}));
+  }
+  if(p.lev===undefined) p.lev=null;   // levers applied: {days, def}
+  if(d.prefs===undefined) d.prefs={};
+  (d.plan&&d.plan.moves?d.plan.moves:[]).forEach(m=>{ if(!m.muscles) m.muscles=muscleOf(m.name); });
+  return d;
+}
+
+/* exercise → muscles (fallback mapper for plans built before v0.3) */
+function muscleOf(name){
+  const n=(name||'').toLowerCase();
+  if(n.includes('squat')||n.includes('leg press')) return ['Quads','Glutes','Core'];
+  if(n.includes('rdl')||n.includes('romanian')) return ['Hamstrings','Glutes','Low back'];
+  if(n.includes('hip thrust')) return ['Glutes','Hamstrings'];
+  if(n.includes('calf')) return ['Calves'];
+  if(n.includes('bench')||n.includes('chest')) return ['Chest','Triceps','Front delts'];
+  if(n.includes('incline')) return ['Upper chest','Front delts','Triceps'];
+  if(n.includes('shoulder press')||n.includes('ohp')) return ['Front delts','Side delts','Triceps'];
+  if(n.includes('flye')||n.includes('cable')) return ['Chest','Front delts'];
+  if(n.includes('row')||n.includes('pulldown')||n.includes('pull-up')) return ['Lats','Rhomboids','Biceps'];
+  if(n.includes('curl')) return ['Biceps','Forearms'];
+  if(n.includes('triceps')||n.includes('rope')||n.includes('dip')) return ['Triceps','Chest'];
+  if(n.includes('farmer')||n.includes('carry')) return ['Grip','Traps','Core'];
+  if(n.includes('lateral')||n.includes('raise')) return ['Side delts'];
+  return ['Full body'];
+}
+
 /* --- crude honest engine: estimates, not gospel (locked principle: bands, not numbers) --- */
+const FAT_KCAL=7700;
 const ENG = {
   mifflin(p){ // p: {sex,age,cm,kg}
     const base = 10*p.kg + 6.25*p.cm - 5*p.age;
     return Math.round(base + (p.sex==='m' ? 5 : -161));
   },
   actMult(days){ return Math.min(1.55, 1.30 + days*0.055); },
-  tdee(p){ return Math.round(this.mifflin(p) * this.actMult(p.daysPerWeek)); },
-  /* arrival window: weeks mid + spread that widens with distance (honest band) */
-  arrival(p){
-    const dk = Math.max(0, p.kg - p.goalKg);            // kg to lose (cut goal assumed)
-    const rate = p.kg * 0.005;                          // 0.5% BW / week — the honest rate
-    const wk = rate>0 ? dk/rate : 0;
-    const spread = Math.max(1.5, wk*0.22);              // ±22%, min 1.5wk
-    const d = w => { const t=new Date(); t.setDate(t.getDate()+Math.round(w*7));
-      return t.toLocaleDateString('en-US',{month:'short',day:'numeric'}); };
-    return { weeks:Math.round(wk), lo:d(wk-spread), hi:d(wk+spread),
-             conf: Math.max(35, Math.min(88, 92 - wk*1.1)) }; // confidence decays with horizon
+  days(p){ return (p.lev && p.lev.days) || p.daysPerWeek; },
+  tdee(p){ return Math.round(this.mifflin(p) * this.actMult(this.days(p))); },
+  /* signed daily intake vs burn: negative = deficit, positive = surplus (build) */
+  deficit(p){
+    if(p.lev && p.lev.def!=null) return -Math.round(p.lev.def);
+    if(p.goal==='build') return Math.round(this.tdee(p)*0.10);             // lean bulk
+    if(p.goal==='recomp') return -Math.round(Math.min(400,Math.max(200,this.tdee(p)*0.06)));
+    return -Math.round(Math.min(700, Math.max(300, this.tdee(p)*0.22)));   // honest cut
   },
-  deficit(p){ return Math.round(Math.min(700, Math.max(300, this.tdee(p)*0.22))); },
-  proteinTarget(p){ return Math.round(p.goalKg*2.1); }, // g/day, protein-first (YouTrain)
+  dailyBudget(p){ return this.tdee(p) + this.deficit(p); },
+  proteinTarget(p){
+    if(p.goal==='build') return Math.round(p.kg*2.2);
+    if(p.goal==='recomp') return Math.round(p.kg*2.4);
+    return Math.round(p.goalKg*2.1);
+  },
+  lbm(p){ return (p.bf!=null && p.bf>0 && p.bf<70) ? Math.round(p.kg*(1-p.bf/100)) : null; },
+  /* over-budget days in the last 14 — the slippage the window answers to */
+  slipDays(st){
+    const p=st.profile, budget=this.dailyBudget(p);
+    const cut=Date.now()-14*864e5; const map={};
+    (st.foods||[]).forEach(f=>{
+      const t=new Date((f.d||'')+'T12:00:00');
+      if(isNaN(t)||t.getTime()<cut) return;
+      map[f.d]=(map[f.d]||0)+f.kcal;
+    });
+    return Object.values(map).filter(k=>k>budget*1.15).length;
+  },
+  /* arrival: 4-week window that re-aims on EVERY log — strict pulls it left, sloppy pushes right */
+  arrival(st){
+    const p=st.profile;
+    const kgNow=(st.weights&&st.weights.length)?st.weights[st.weights.length-1].kg:p.kg;
+    const gain=p.goal==='build';
+    const ratePct=p.goal==='recomp'?0.004:(gain?0.002:0.005);
+    const rate=kgNow*ratePct;
+    const dk=Math.max(0, gain ? (p.goalKg-kgNow) : (kgNow-p.goalKg));
+    const wk=rate>0?dk/rate:0;
+    const slip=this.slipDays(st);
+    const half=2+Math.min(3, slip*0.08);                 // 4-wk window, widens with sloppiness
+    const push=Math.min(2, slip*0.18);                   // window drifts right on over-budget weeks
+    const eff=wk+push;
+    const d=w=>{ const t=new Date(); t.setDate(t.getDate()+Math.round(w*7));
+      return t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+(w>52?' \u2019'+String(t.getFullYear()).slice(2):''); };
+    return { weeks:Math.round(eff), lo:d(Math.max(0,eff-half)), hi:d(eff+half),
+             conf: Math.max(35, Math.min(88, 92 - wk*1.0)),
+             kgNow, slip, gain, ratePct };
+  },
   /* set-to-set adaptation (MacroFactor Workouts mechanic): RIR -> next load */
   nextLoad(load, rir){
     if(rir<=1) return Math.round((load+2.5)*2)/2;
@@ -263,8 +356,24 @@ const ENG = {
 };
 
 function fmtDate(d){ return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function esc(s){ return (s==null?'':String(s)).replace(/[&"<>]/g,c=>({'&':'&amp;','"':'&quot;','<':'&lt;','>':'&gt;'}[c])); }
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* voice-to-text (type it OR say it — same field) */
+window.srFill=(targetId)=>{
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ toast('Voice input needs Safari 14.5+ or Chrome — type it instead'); return; }
+  const el=document.getElementById(targetId); if(!el) return;
+  const r=new SR(); r.lang='en-US'; r.interimResults=false; r.maxAlternatives=1;
+  r.onresult=e=>{ const t=e.results[0][0].transcript;
+    el.value=(el.value?el.value+' ':'')+t;
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    toast('Heard: '+t); };
+  r.onerror=()=>toast('No speech caught — try again');
+  r.onend=()=>{};
+  try{ r.start(); toast('Listening…'); }catch(e){ toast('Mic busy — tap again'); }
+};
 
 /* ============ router ============ */
 const routes = {}; // name -> {render(el), tab:bool}
@@ -302,16 +411,67 @@ function renderTabs(active){
   tb.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.r===active));
 }
 
+/* ============ programs (workout-plan options — respects days/week, injuries, equipment) ============ */
+const PLANS = {
+  fba: { name:'Full Body A', tag:'2–3 days/wk · every muscle, every session',
+    moves:[
+      ['Back Squat',1.0,'6',['Quads','Glutes','Core'],'knee','Leg Press (knee-swap)'],
+      ['Bench Press',0.72,'8',['Chest','Triceps','Front delts'],'shoulder','Incline DB Press (shoulder-swap)'],
+      ['Chest-Supported Row',0.6,'10',['Lats','Rhomboids','Biceps']],
+      ['Romanian Deadlift',0.85,'8',['Hamstrings','Glutes','Low back'],'lowback','Hip Thrust (low-back-swap)'],
+      ['Farmer Carry',0.5,'40m',['Grip','Traps','Core']]
+    ]},
+  ul: { name:'Upper / Lower — Day A', tag:'4 days/wk · upper+lower alternating',
+    moves:[
+      ['Bench Press',0.72,'8',['Chest','Triceps','Front delts'],'shoulder','Incline DB Press (shoulder-swap)'],
+      ['Chest-Supported Row',0.6,'10',['Lats','Rhomboids','Biceps']],
+      ['Incline DB Press',0.5,'10',['Upper chest','Front delts','Triceps']],
+      ['Lat Pulldown',0.6,'10',['Lats','Biceps']],
+      ['Farmer Carry',0.5,'40m',['Grip','Traps','Core']]
+    ]},
+  ppl: { name:'Push — Day A', tag:'5–6 days/wk · push / pull / legs rotation',
+    moves:[
+      ['Bench Press',0.72,'8',['Chest','Triceps','Front delts'],'shoulder','Incline DB Press (shoulder-swap)'],
+      ['Incline DB Press',0.5,'10',['Upper chest','Front delts','Triceps']],
+      ['Dumbbell Shoulder Press',0.35,'10',['Front delts','Side delts','Triceps'],'shoulder','Lateral Raise (shoulder-swap)'],
+      ['Cable Flye',0.25,'12',['Chest','Front delts']],
+      ['Triceps Rope',0.3,'12',['Triceps']]
+    ]}
+};
+function buildPlan(a, prog){
+  const days=a.daysPerWeek||4;
+  if(!prog) prog = days<=3 ? 'fba' : 'ul';
+  const kg=a.kg, f=a.equip==='min'?0.35:(a.equip==='home'?0.6:1);
+  const inj=(a.injdetail&&a.injdetail.length?a.injdetail.map(x=>x.part):(a.injuries||[]));
+  const mv=(name,bw,reps,muscles,swapInj,swap)=>{
+    const o={name, kg:Math.max(0,Math.round(kg*bw*f/2.5)*2.5), reps, sets:4, muscles, done:[], rirs:[]};
+    if(swapInj && inj.includes(swapInj)){ o.inj=swapInj; o.swap=swap; }
+    return o;
+  };
+  const src=PLANS[prog]||PLANS.fba;
+  return { name:src.name, prog, moves:src.moves.map(m=>mv(...m)) };
+}
+function injSummary(p){
+  const L=p.injdetail||[];
+  if(!L.length) return null;
+  return L.map(x=>({
+    label:`${x.part} (${x.side==='l'?'left':x.side==='r'?'right':x.side==='b'?'both':'unspecified side'}) · ${x.status==='full'?'trains full':x.status==='painfree'?'pain-free only':x.status==='light'?'light use only':'not using it yet'} · ${x.ago||'unknown when'}`,
+    notes:[x.what,x.notes].filter(Boolean).join(' — ')
+  }));
+}
+
 /* ============ QUIZ (BWS funnel: the quiz IS the onboarding) ============ */
-const QUIZ = { step:0, a:{ goal:'lose', sex:'m', age:38, cm:178, kg:96, goalKg:82, daysPerWeek:4, equip:'gym', injuries:[] } };
+const QUIZ = { step:0,
+  a:{ goal:'lose', sex:'m', age:38, cm:178, kg:96, goalKg:82, daysPerWeek:4, equip:'gym',
+      bf:null, injuries:[], injdetail:[] } };
 routes['quiz'] = { tab:false, render(host){
   const a=QUIZ.a;
   const steps=[
-    { t:"What's the mission?", sub:"Pick the one that matters. You can change it later.", body:()=>`
-      <button class="pick ${a.goal==='lose'?'on':''}" onclick="qzSet('goal','lose')"><b>Lose the fat</b><span>Get to a lean body and stay there</span></button>
-      <button class="pick ${a.goal==='recomp'?'on':''}" onclick="qzSet('goal','recomp')"><b>Recomp</b><span>Lose fat and build muscle at once — slower, steadier</span></button>
-      <button class="pick ${a.goal==='build'?'on':''}" onclick="qzSet('goal','build')"><b>Build muscle</b><span>Strength first, scale second</span></button>` },
-    { t:"The honest numbers", sub:"This builds your expenditure estimate. Bands, not false precision.", body:()=>`
+    { t:"What's the mission?", sub:"Pick the one that matters. You can change it later — the plan, calories and dates all follow.", body:()=>`
+      <button class="pick ${a.goal==='lose'?'on':''}" onclick="qzSet('goal','lose')"><b>Mission A — Lose the fat</b><span>Get to a lean body and stay there</span></button>
+      <button class="pick ${a.goal==='recomp'?'on':''}" onclick="qzSet('goal','recomp')"><b>Mission B — Recomp</b><span>Lose fat and build muscle at once — slower, steadier</span></button>
+      <button class="pick ${a.goal==='build'?'on':''}" onclick="qzSet('goal','build')"><b>Mission C — Build muscle</b><span>Strength first, scale second</span></button>` },
+    { t:"The honest numbers", sub:"This builds your expenditure estimate. Bands, not false precision. Body fat is optional — it sharpens the lean-mass math.", body:()=>`
       <div class="seg" id="qseg">
         <button class="${a.sex==='m'?'on':''}" onclick="qzSeg('m')">Male</button>
         <button class="${a.sex==='f'?'on':''}" onclick="qzSeg('f')">Female</button>
@@ -321,7 +481,9 @@ routes['quiz'] = { tab:false, render(host){
         <div><label class="lab">Height (cm)</label><input class="field" type="number" id="q_cm" value="${a.cm}"></div>
         <div><label class="lab">Weight (kg)</label><input class="field" type="number" step="0.1" id="q_kg" value="${a.kg}"></div>
         <div><label class="lab">Goal (kg)</label><input class="field" type="number" step="0.1" id="q_goal" value="${a.goalKg}"></div>
-      </div>` },
+        <div><label class="lab">Body fat % <span style="text-transform:none">— optional</span></label><input class="field" type="number" step="0.5" id="q_bf" placeholder="don't know = fine" value="${a.bf==null?'':a.bf}"></div>
+      </div>
+      <div class="note">Know your number (DEXA, calipers, a good scale)? In it goes — lean-mass stats and the muscle engine use it. Leave it blank and everything still works.</div>` },
     { t:"Training days per week?", sub:"Be honest — the plan is built on this, not on wishes.", body:()=>{
       const marks=[2,3,4,5,6];
       return `<div class="display" style="text-align:center;" id="q_daysnum">${a.daysPerWeek}</div>
@@ -333,23 +495,23 @@ routes['quiz'] = { tab:false, render(host){
       <button class="pick ${a.equip==='gym'?'on':''}" onclick="qzSet('equip','gym')"><b>Full gym</b><span>Barbells, machines, cables</span></button>
       <button class="pick ${a.equip==='home'?'on':''}" onclick="qzSet('equip','home')"><b>Home setup</b><span>Dumbbells, bench, bands</span></button>
       <button class="pick ${a.equip==='min'?'on':''}" onclick="qzSet('equip','min')"><b>Minimal</b><span>Bodyweight + whatever's around</span></button>` },
-    { t:"Anything we should program around?", sub:"Injury-aware swaps are built in — not an afterthought.", body:()=>{
-      const opts=[['shoulder','Shoulder'],['lowback','Low back'],['knee','Knees'],['wrist','Wrists/grip'],['none','All good']];
-      return opts.map(([k,l])=>`<button class="pick ${a.injuries.includes(k)?'on':''}" onclick="qzInj('${k}')"><b>${l}</b></button>`).join(''); } },
+    { t:"Pain history — the details", sub:"Side, what happened, how long ago, what you can still load. Details decide the swap — not just the body part.", body:()=>injBody(a) },
     { t:"Your plan is ready", reveal:true, body:()=>{
-      const p={sex:a.sex,age:a.age,cm:a.cm,kg:a.kg,goalKg:a.goalKg,daysPerWeek:a.daysPerWeek};
-      const tdee=ENG.tdee(p), arr=ENG.arrival(p), def=ENG.deficit(p), pro=ENG.proteinTarget(p);
+      const p={sex:a.sex,age:a.age,cm:a.cm,kg:a.kg,goalKg:a.goalKg,daysPerWeek:a.daysPerWeek,goal:a.goal,lev:null};
+      const tdee=ENG.tdee(p), arr=ENG.arrival({profile:p,weights:[],foods:[]}), pro=ENG.proteinTarget(p);
+      const d=ENG.deficit(p);
       return `<div class="card flat" style="text-align:center;padding:26px 18px;">
-        <div class="tiny dim">Estimated arrival at your goal</div>
-        <div class="display volt" style="margin:10px 0 4px;">${arr.lo} – ${arr.hi}</div>
-        <div class="mut small">~${arr.weeks} weeks · confidence band, not a promise</div>
+        <div class="tiny dim">ESTIMATED ARRIVAL AT YOUR GOAL · ±4-week window</div>
+        <div class="display volt md" style="margin:10px 0 4px;">${arr.lo} – ${arr.hi}</div>
+        <div class="mut small">~${arr.weeks} weeks out · confidence band, not a promise</div>
       </div>
       <div class="statrow">
         <div class="stat"><div class="v num">${tdee.toLocaleString()}</div><div class="k">Est. burn / day</div></div>
-        <div class="stat"><div class="v num">−${def}</div><div class="k">Daily deficit</div></div>
+        <div class="stat"><div class="v num">${d<0?'−':'+'}${Math.abs(d)}</div><div class="k">${d<0?'Daily deficit':'Daily surplus'}</div></div>
         <div class="stat"><div class="v num">${pro}g</div><div class="k">Protein floor</div></div>
       </div>
-      <div class="note">This engine re-measures you every week from your scale + your plate. No wearable guesses. The estimate gets sharper the longer you log — that's the whole trick.</div>`; } }
+      ${p.bf!=null?`<div class="tiny dim" style="text-align:center;margin-top:8px;">lean mass ≈ ${ENG.lbm(p)} kg off your ${p.bf}% — locked in</div>`:''}
+      <div class="note">The window re-aims itself almost daily — every meal and workout logged moves it. Be strict and it pulls left; coast and it drifts right. And hear this: <b>these three missions are just the beginning.</b> Arriving is chapter 1 — the real work is the maintenance decade, staying inside your band. That's the part no other app builds.</div>`; } }
   ];
   const s=steps[QUIZ.step];
   host.innerHTML=`
@@ -365,29 +527,81 @@ routes['quiz'] = { tab:false, render(host){
       </div>
     </div>`;
 }};
+
+/* ---- injuries: detailed per-injury cards, typed or spoken ---- */
+function injBody(a){
+  const cards=a.injdetail.map((x,i)=>`
+    <div class="injcard">
+      <div class="row between"><b style="font-size:14px;">Injury ${i+1}</b>
+        <button class="chip" style="color:var(--bad);" onclick="qzInjDel(${i})">remove</button></div>
+      <label class="lab2">What's hurt</label>
+      <div class="seg sm">
+        ${[['shoulder'],['lowback','Low back'],['knee'],['wrist','Wrist/grip'],['hip'],['ankle']].map(([k,l])=>
+          `<button class="${(x.part||'')===(k==='lowback'?'lowback':k)?'on':''}" onclick="qzInjSet(${i},'part','${k==='lowback'?'lowback':k}')">${l||k}</button>`).join('')}
+      </div>
+      <label class="lab2">Which side</label>
+      <div class="seg sm">
+        <button class="${x.side==='l'?'on':''}" onclick="qzInjSet(${i},'side','l')">Left</button>
+        <button class="${x.side==='r'?'on':''}" onclick="qzInjSet(${i},'side','r')">Right</button>
+        <button class="${x.side==='b'?'on':''}" onclick="qzInjSet(${i},'side','b')">Both</button>
+      </div>
+      <label class="lab2">How long ago</label>
+      <div class="seg sm">
+        ${[['week','This week'],['month','Past month'],['year','This year'],['years','Years'],['ongoing','Ongoing']].map(([k,l])=>
+          `<button class="${x.ago===k?'on':''}" onclick="qzInjSet(${i},'ago','${k}')">${l}</button>`).join('')}
+      </div>
+      <label class="lab2">What you can still use it for</label>
+      <div class="seg sm">
+        ${[['full','Trains full'],['painfree','Pain-free only'],['light','Light only'],['none','Can\'t use']].map(([k,l])=>
+          `<button class="${x.status===k?'on':''}" onclick="qzInjSet(${i},'status','${k}')">${l}</button>`).join('')}
+      </div>
+      <label class="lab2">What happened</label>
+      <div class="row">
+        <input class="field grow" id="qi_what_${i}" type="text" value="${esc(x.what)}" placeholder="e.g. disc tweak deadlifting heavy"
+          oninput="qzInjF(${i},'what',this.value)">
+        <button class="micb" title="speak it" onclick="srFill('qi_what_${i}')">🎙</button>
+      </div>
+      <label class="lab2">What still works / what to avoid</label>
+      <div class="row">
+        <input class="field grow" id="qi_notes_${i}" type="text" value="${esc(x.notes)}" placeholder="e.g. overhead hurts, neutral grip fine"
+          oninput="qzInjF(${i},'notes',this.value)">
+        <button class="micb" title="speak it" onclick="srFill('qi_notes_${i}')">🎙</button>
+      </div>
+    </div>`).join('');
+  return `${cards||'<button class="pick" onclick="qzInjNone()"><b>All good — no pain history</b><span>Skip the swaps, train everything</span></button>'}
+    ${a.injdetail.length?'<button class="pick" onclick="qzInjAdd()"><b>+ Add another injury</b><span>Up to 5 — details per injury</span></button>':''}
+    ${a.injdetail.length?'':'<button class="pick" onclick="qzInjAdd()"><b>+ I have something to program around</b><span>Add the details — body part, side, story, limits</span></button>'}`;
+}
 window.qzSet=(k,v)=>{QUIZ.a[k]=v; go('quiz');};
 window.qzSeg=(v)=>{QUIZ.a.sex=v; go('quiz');};
 window.qzDays=(v)=>{QUIZ.a.daysPerWeek=+v; $('#q_daysnum').textContent=v;
   $('#q_days').style.setProperty('--fill',(v-2)/4*100+'%');};
-window.qzInj=(k)=>{ const a=QUIZ.a.injuries;
-  if(k==='none'){QUIZ.a.injuries=['none'];}
-  else{ const i=a.indexOf(k); i>=0?a.splice(i,1):a.push(k);
-    const ni=a.indexOf('none'); if(ni>=0&&a.length>1)a.splice(ni,1); }
+window.qzInjSet=(i,k,v)=>{ QUIZ.a.injdetail[i][k]=v; go('quiz'); };
+window.qzInjF=(i,k,v)=>{ QUIZ.a.injdetail[i][k]=v; };   // no re-render: typing keeps focus
+window.qzInjNone=()=>{ QUIZ.a.injdetail=[]; go('quiz'); };
+window.qzInjAdd=()=>{
+  if(QUIZ.a.injdetail.length>=5){ toast('Five injuries covered — the coach handles the rest'); return; }
+  QUIZ.a.injdetail.push({part:'shoulder',side:'r',what:'',ago:'year',status:'light',notes:''});
   go('quiz'); };
+window.qzInjDel=(i)=>{ QUIZ.a.injdetail.splice(i,1); go('quiz'); };
 window.qzBack=()=>{ QUIZ.step=Math.max(0,QUIZ.step-1); go('quiz'); };
 window.qzNext=(final)=>{
   if(QUIZ.step===1){ // harvest stats
     ['age','cm','kg','goal'].forEach(k=>{ const el=$('#q_'+k); if(el) QUIZ.a[k==='goal'?'goalKg':k]=parseFloat(el.value)||QUIZ.a[k==='goal'?'goalKg':k]; });
-    if(QUIZ.a.goalKg>=QUIZ.a.kg && QUIZ.a.goal==='lose'){ toast('Goal below current weight — flip the goal or the mission'); return; }
+    const bfEl=$('#q_bf'); QUIZ.a.bf = bfEl && bfEl.value!=='' ? Math.min(70,Math.max(2,parseFloat(bfEl.value))) : null;
+    if(QUIZ.a.goal==='build'){ if(QUIZ.a.goalKg<=QUIZ.a.kg){ toast('Build mission: set a goal at or above your current weight'); return; } }
+    else if(QUIZ.a.goalKg>=QUIZ.a.kg){ toast('Goal below current weight — flip the goal or the mission'); return; }
   }
   if(final){ commitProfile(); go('paywall'); return; }
   QUIZ.step++; go('quiz');
 };
 function commitProfile(){
   const a=QUIZ.a;
+  const injuries=a.injdetail.length?a.injdetail.map(x=>x.part):['none'];
   store.data={ onboarded:true, ts:Date.now(),
-    profile:{sex:a.sex,age:a.age,cm:a.cm,kg:a.kg,goalKg:a.goalKg,daysPerWeek:a.daysPerWeek,equip:a.equip,injuries:a.injuries,goal:a.goal},
-    weights:seedWeights(a.kg), foods:[], plan:buildPlan(a), checkins:[], tier:null };
+    profile:{sex:a.sex,age:a.age,cm:a.cm,kg:a.kg,goalKg:a.goalKg,daysPerWeek:a.daysPerWeek,equip:a.equip,
+             injuries,injdetail:a.injdetail,bf:a.bf,goal:a.goal,mode:'full',approach:'protein',lev:null},
+    weights:seedWeights(a.kg), foods:[], plan:buildPlan(a), checkins:[], tier:null, prefs:{} };
   store.save();
 }
 function seedWeights(kg){ // sample history until real check-ins replace it (LABELED sample in UI)
@@ -396,55 +610,54 @@ function seedWeights(kg){ // sample history until real check-ins replace it (LAB
     out.push({d:d.toISOString().slice(0,10), kg:Math.round((kg + i*0.35 + (i%2)*0.2)*10)/10, sample:true}); }
   return out;
 }
-function buildPlan(a){ // "Full Body A" prescription, loads % of BW as demo defaults
-  const kg=a.kg, f=a.equip==='min'?0.35:(a.equip==='home'?0.6:1);
-  const inj=a.injuries||[];
-  const mv=(name,bw,reps,inj,swap)=>({name,kg:Math.max(0,Math.round(kg*bw*f/2.5)*2.5),reps,sets:4,inj,swap,done:[],rirs:[]});
-  return { name:'Full Body A', moves:[
-    mv(inj.includes('knee')?'Leg Press (knee-swap)':'Back Squat',1.0,'6', 'knee','Leg Press'),
-    mv(inj.includes('shoulder')?'Incline DB Press (shoulder-swap)':'Bench Press',0.72,'8','shoulder','Incline DB Press'),
-    mv('Chest-Supported Row',0.6,'10'),
-    mv(inj.includes('lowback')?'Hip Thrust (low-back-swap)':'Romanian Deadlift',0.85,'8','lowback','Hip Thrust'),
-    mv('Farmer Carry',0.5,'40m')
-  ]};
-}
 
-/* ============ PAYWALL — pay-what-you-can prototype ============ */
+/* ============ PAYWALL — PWYC + lifetime + the two-phase price ============ */
 routes['paywall'] = { tab:false, render(host){
-  const arr = ENG.arrival(store.data.profile);
+  const p=store.data.profile;
+  const arr=ENG.arrival(store.data);
   store.data.tier = store.data.tier ?? 'fair';
   const T=[
-    ['zero','0','$0','Sponsored','Paid for by the member pool. No card, no guilt — pay it forward when you can.',''],
-    ['fair','5.99','$5.99','Fair price','What it costs to run, plus a little. Anchored at what MacroFactor charges.',''],
-    ['sup','11.99','$11.99','Supporter','Covers you + chips into the sponsored pool.','MOST HONEST'],
-    ['patron','19','$19','Patron','Funds two sponsored spots outright. You legend.','']
+    ['zero','$0','Sponsored','Paid for by the member pool. No card, no guilt — pay it forward when you can.','',0],
+    ['fair','5.99','Fair price','What it costs to run, plus a little. Anchored at what MacroFactor charges.','',1],
+    ['sup','11.99','Supporter','Covers you + chips into the sponsored pool.','MOST HONEST',1],
+    ['patron','19','Patron','Funds two sponsored spots outright. You legend.','',1],
+    ['life','$199','Lifetime — both phases','Get there, stay there, forever. Every update ever. Founders math: ≈$4/mo if you keep it 4 years.','ONE-TIME',0]
   ];
   host.innerHTML=`
     <div style="padding-top:10px;">
-      <span class="chip"><span class="dot"></span>YOUR PLAN: ${arr.weeks} WEEKS → ${store.data.profile.goalKg} kg</span>
+      <span class="chip"><span class="dot"></span>YOUR PLAN: ${arr.weeks} WEEKS → ${p.goalKg} kg</span>
       <h2 style="font-size:29px;margin:14px 0 4px;">Pay what you can.</h2>
-      <div class="mut small mb">Seriously. Full app at every level — no features held hostage. The tiers exist so broke people train free and flush people cover them.</div>
+      <div class="mut small mb">Full app at every level — no features held hostage, sponsored included. The tiers exist so broke people train free and flush people cover them.</div>
+      <div class="card flat" style="padding:14px;">
+        <div class="tiny dim">THE TWO PERIODS · PRICED FOR WHAT THEY ARE</div>
+        <div class="row between mt"><div><b style="font-size:14px;">Phase 1 — get there</b><div class="mut small">the mission you just started</div></div><span class="num volt">tier price ↓</span></div>
+        <div class="row between mt"><div><b style="font-size:14px;">Phase 2 — stay there</b><div class="mut small">maintenance era, starts on arrival</div></div><span class="num volt">auto-halves</span></div>
+        <div class="note" style="padding-bottom:0;">Arriving is the success event, so maintenance costs less than the cut — the work is lighter and the decade is long. Lock it forever with Lifetime instead.</div>
+      </div>
       <div class="seg sm mb" id="cycleseg">
         <button class="on" onclick="pwCycle(this,'mo')">Monthly</button>
         <button onclick="pwCycle(this,'yr')">Annual − 2 months free</button>
       </div>
       <div id="tiers"></div>
       <button class="btn mt" onclick="pwGo()">Start — demo, no charge</button>
-      <div class="note">Real version: sliders like this need web checkout (Apple IAP only allows fixed price points — so in-app it ships as tier buttons like these). Cancel anytime, keep your data forever. It lives on this device anyway.</div>
+      <div class="note">Real version: tier buttons ship in-app as fixed price points (Apple IAP rules). Cancel anytime, keep your data forever. It lives on this device anyway.</div>
     </div>`;
   drawTiers(T,'mo');
 }};
 window.pwCycle=(btn,cy)=>{ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on'); drawTiers(window._T, cy); };
 function drawTiers(T,cy){
-  T = T || [['zero','0','$0','Sponsored','Paid for by the member pool. No card, no guilt.',''],
-    ['fair','5.99','$5.99','Fair price','What it costs to run, plus a little.',''],
-    ['sup','11.99','$11.99','Supporter','Covers you + chips into the sponsored pool.','MOST HONEST'],
-    ['patron','19','$19','Patron','Funds two sponsored spots outright. You legend.','']];
+  T = T || [['zero','$0','Sponsored','Paid for by the member pool. No card, no guilt.','',0],
+    ['fair','5.99','Fair price','What it costs to run, plus a little.','',1],
+    ['sup','11.99','Supporter','Covers you + chips into the sponsored pool.','MOST HONEST',1],
+    ['patron','19','Patron','Funds two sponsored spots outright. You legend.','',1],
+    ['life','$199','Lifetime — both phases','Get there, stay there, forever.','ONE-TIME',0]];
   window._T=T;
-  $('#tiers').innerHTML = T.map(([k,mo,sym,name,desc,tag])=>{
-    const price = cy==='yr' && mo!=='0' ? '$'+(Math.round(parseFloat(mo)*10)) : sym;
-    const per = mo==='0' ? '' : (cy==='yr'?'<small>/yr</small>':'<small>/mo</small>');
+  $('#tiers').innerHTML = T.map(([k,mo,name,desc,tag,monthly])=>{
+    let price, per='';
+    if(!monthly){ price=mo; }                                  // $0 / lifetime: flat
+    else if(cy==='yr'){ price='$'+(Math.round(parseFloat(mo)*10)); per='<small>/yr</small>'; }
+    else { price='$'+mo; per='<small>/mo</small>'; }
     return `<button class="tier ${store.data.tier===k?'on':''}" onclick="pwTier('${k}')">
       <div class="amt">${price}${per}</div>
       <div class="grow"><b>${name}</b>${tag?`<span class="tag">${tag}</span>`:''}
@@ -458,32 +671,48 @@ window.pwTier=(k)=>{ store.data.tier=k; store.save();
 window.pwGo=()=>{ store.save(); toast('Tier noted. Nobody was charged — this is a demo.'); go('home'); };
 
 /* ============ HOME ============ */
+function isMaint(st){
+  const p=st.profile;
+  const kgNow=(st.weights&&st.weights.length)?st.weights[st.weights.length-1].kg:p.kg;
+  return Math.abs(kgNow-p.goalKg) <= p.goalKg*0.03;
+}
 routes['home'] = { tab:true, render(host){
-  const p=store.data.profile, arr=ENG.arrival(p), tdee=ENG.tdee(p);
+  const st=store.data, p=st.profile, arr=ENG.arrival(st), tdee=ENG.tdee(p);
   const pro=ENG.proteinTarget(p);
   const todays = todayTotals();
   const ring = Math.min(1, todays.p/pro);
   const ringOff = 251*(1-ring);
-  const lastKg = store.data.weights[store.data.weights.length-1].kg;
+  const maint=isMaint(st);
+  const d=ENG.deficit(p);
   host.innerHTML=`
     <div class="hero" id="hero">
       <img id="figimg" src="img/dream-body.jpg" alt="goal-body stand-in figure">
       <div class="stagechip" id="figchip">DREAM · ${p.goalKg} kg</div>
       <div class="stagepanel">
         <div class="scrubrow">
-          <button class="stop" data-s="then" onclick="figStop('then')"><span class="k">Then</span><span class="v">${p.kg}</span></button>
-          <button class="stop now" data-s="now" onclick="figStop('now')"><span class="k">Now</span><span class="v">${lastKg}</span></button>
-          <button class="stop sel" data-s="dream" onclick="figStop('dream')"><span class="k">Dream</span><span class="v">${p.goalKg}</span></button>
+          <button class="stop" data-s="then" onclick="figStop('then')"><span class="k">A · Then</span><span class="v">${p.kg}</span></button>
+          <button class="stop now" data-s="now" onclick="figStop('now')"><span class="k">B · Now</span><span class="v">${arr.kgNow}</span></button>
+          <button class="stop sel" data-s="dream" onclick="figStop('dream')"><span class="k">C · Dream</span><span class="v">${p.goalKg}</span></button>
         </div>
       </div>
     </div>
-    <div class="trainerline"><span class="volt">✦</span> Hold me — I train you until you match my specs.</div>
+    <div class="trainerline"><span class="volt">✦</span> Hold me — I train you until you match my specs. A/B/C always rides along.</div>
     <div class="tiny dim" style="margin:0 4px 4px;">stand-in figures tonight — the real ones render from your photos</div>
     <div class="card" style="text-align:center;">
-      <div class="tiny dim">ARRIVAL WINDOW · ${p.goal==='lose'?'FAT LOSS':'GOAL'}</div>
-      <div class="display volt" style="margin:12px 0 6px;">${arr.lo}<span class="dim"> → </span>${arr.hi}</div>
-      <div class="mut small">~${arr.weeks} weeks out · ${Math.round(arr.conf)}% confidence band — gets narrower every check-in</div>
-      <div class="bar mt" style="height:8px;"><i style="width:${arr.conf}%;"></i></div>
+      ${maint?`
+        <div class="tiny dim" style="color:var(--ok);">PHASE 2 · MAINTENANCE ERA — WEEKS IN BAND</div>
+        <div class="display volt" style="margin:12px 0 6px;">0<span class="dim" style="font-size:20px;"> wks</span></div>
+        <div class="mut small">you're at goal — the counter that matters for the decade starts now</div>
+      `:`
+        <div class="tiny dim">ARRIVAL WINDOW · ±4 WEEKS · RE-AIMS ON EVERY LOG</div>
+        <div class="display volt md" style="margin:12px 0 6px;">${arr.lo}<span class="dim"> → </span>${arr.hi}</div>
+        <div class="mut small">~${arr.weeks} weeks out · ${Math.round(arr.conf)}% confidence band</div>
+        <div class="bar mt" style="height:8px;"><i style="width:${arr.conf}%;"></i></div>
+        <div class="tiny dim mt" style="${arr.slip? '':'text-transform:none;'}">${arr.slip
+          ? `⚠ ${arr.slip} over-budget day${arr.slip>1?'s':''} in the last 14 — that's the window creeping right. A strict week pulls it back.`
+          : 'strict so far — the window holds its line'}</div>
+      `}
+      <button class="btn ghost mt" style="width:100%;" onclick="go('levers')">Play with the levers →</button>
     </div>
     <div class="row" style="align-items:stretch;">
       <div class="card grow" style="text-align:center;">
@@ -502,12 +731,12 @@ routes['home'] = { tab:true, render(host){
         <div class="card flat" style="margin:0 0 10px;height:calc(50% - 5px);display:flex;flex-direction:column;justify-content:center;">
           <div class="k tiny dim">MEASURED BURN</div>
           <div class="num" style="font-size:22px;">${tdee.toLocaleString()} <span class="dim small">kcal</span></div>
-          <div class="tiny dim">from scale + plate, not a wrist guess</div>
+          <div class="tiny dim">${d<0?`budget ${ENG.dailyBudget(p).toLocaleString()}/day`:`surplus +${Math.abs(d)}/day`} · from scale + plate</div>
         </div>
         <div class="card flat" style="margin:0;height:calc(50% - 5px);display:flex;flex-direction:column;justify-content:center;">
           <div class="k tiny dim">MUSCLE STATUS</div>
           <div class="num" style="font-size:22px;color:var(--ok);">HOLDING</div>
-          <div class="tiny dim">protein on target · 2+ strength days</div>
+          <div class="tiny dim">${p.bf!=null?`est. LBM ${ENG.lbm(p)} kg · `:''}protein on target · ${ENG.days(p)} strength days</div>
         </div>
       </div>
     </div>
@@ -518,13 +747,15 @@ routes['home'] = { tab:true, render(host){
       <button class="btn ghost" onclick="go('food')">Log food</button>
       <button class="btn ghost" onclick="go('checkin')">Check-in</button>
     </div>
-    <div class="note">Avatar-first home (YouTrain lock) + honest-ETA hero + measured burn + muscle status — all off one crude loop.</div>`;
+    <div class="note">${p.mode==='min'
+      ? 'Scale-first mode: your weigh-ins alone keep the avatar and window honest — meals here are optional accelerators.'
+      : 'Avatar-first home + honest 4-week window + measured burn + muscle status — all off one crude loop that re-aims daily.'}</div>`;
 }};
 window.figStop=(s)=>{
   const img=$('#figimg'), hero=$('#hero'), chip=$('#figchip');
-  const p=store.data.profile, lastKg=store.data.weights[store.data.weights.length-1].kg;
+  const st=store.data, p=st.profile;
   const map={then:{src:'img/today.jpg',mute:true,label:'THEN · '+p.kg+' kg'},
-             now:{src:'img/today.jpg',mute:false,label:'NOW · '+lastKg+' kg'},
+             now:{src:'img/today.jpg',mute:false,label:'NOW · '+arrNow()+' kg'},
              dream:{src:'img/dream-body.jpg',mute:false,label:'DREAM · '+p.goalKg+' kg'}};
   const m=map[s];
   img.style.opacity=0;
@@ -532,6 +763,7 @@ window.figStop=(s)=>{
     chip.textContent=m.label; img.style.opacity=1; },180);
   document.querySelectorAll('#hero .stop').forEach(b=>b.classList.toggle('sel',b.dataset.s===s));
 };
+function arrNow(){ const st=store.data; return ENG.arrival(st).kgNow; }
 
 /* --- food totals helper (used by home + food) --- */
 function todayTotals(){
@@ -539,26 +771,112 @@ function todayTotals(){
   const f=(store.data?.foods||[]).filter(x=>x.d===today);
   return f.reduce((a,x)=>({k:a.k+x.kcal,p:a.p+x.p,c:a.c+x.c,fa:a.fa+x.fa}),{k:0,p:0,c:0,fa:0});
 }
-</script>
-<script>
-/* ============ TRAIN (BWS prescription + MacroFactor set-to-set adaptation) ============ */
+
+/* ============ LEVERS — grab the plan, watch phase-1 completion move ============ */
+routes['levers'] = { tab:false, render(host){
+  const st=store.data, p=st.profile;
+  const defMag=Math.abs(ENG.deficit(p));
+  const days=ENG.days(p);
+  host.innerHTML=`
+    <div class="row between mb"><div><h2 style="font-size:24px;">Play with the levers</h2>
+      <div class="mut small">phase-1 completion moves as you slide — forward and back</div></div>
+      <button class="chip" onclick="go('home')">✕ close</button></div>
+    <div class="card flat" style="text-align:center;">
+      <div class="tiny dim">PHASE 1 COMPLETE BY</div>
+      <div class="display volt md" style="margin:10px 0 4px;" id="lv_window">—</div>
+      <div class="mut small" id="lv_weeks">—</div>
+      <div class="bar mt" style="height:8px;"><i id="lv_confbar" style="width:60%;"></i></div>
+      <div class="tiny dim mt" id="lv_rate">—</div>
+    </div>
+    <div class="card">
+      <div class="row between"><b>Workouts / week</b><span class="num" id="lv_daysv">${days}</span></div>
+      <input type="range" min="2" max="6" step="1" value="${days}" id="lv_days" oninput="lvMove()">
+      <div class="tiny dim" style="margin-bottom:6px;">training burn — the lever that buys you rate honestly</div>
+      <div class="hr"></div>
+      <div class="row between"><b>Daily calories under burn</b><span class="num" id="lv_defv">${defMag}</span></div>
+      <input type="range" min="100" max="900" step="25" value="${Math.min(900,Math.max(100,defMag))}" id="lv_def" oninput="lvMove()">
+      <div class="tiny dim" id="lv_cap" style="text-transform:none;">the bigger this number, the faster — up to the muscle-loss line</div>
+    </div>
+    <div class="card flat">
+      <div class="row between"><b style="color:var(--dim);">Sleep hours</b><span class="num" id="lv_slpv">7.5</span></div>
+      <input type="range" class="grey" min="5" max="9" step="0.5" value="7.5" id="lv_slp" oninput="lvSlp(this.value)">
+      <div class="note" style="padding:6px 0 0;">Greyed on purpose: sleep doesn't change the math, it changes whether you follow it. It gets tracked at check-in, not traded for dates.</div>
+    </div>
+    <div class="btnrow">
+      <button class="btn ghost" style="width:120px;" onclick="lvRevert()">Revert</button>
+      <button class="btn" onclick="lvApply()">Make it real</button>
+    </div>
+    <div class="note">Unsafe levers greyed with a reason — the honest rate is capped at 0.75% of bodyweight a week regardless of how far you yank the deficit.</div>`;
+  setTimeout(lvMove,0);
+}};
+window.lvSlp=(v)=>{ const el=$('#lv_slpv'); if(el) el.textContent=parseFloat(v).toFixed(1); };
+window.lvMove=()=>{
+  const p=store.data.profile;
+  const days=+($('#lv_days')?.value||ENG.days(p));
+  const def=+($('#lv_def')?.value||300);
+  const kgNow=arrNow();
+  const tdee=Math.round(ENG.mifflin(p)*ENG.actMult(days));
+  let kgwk=def*7/FAT_KCAL;
+  const capped=kgwk > kgNow*0.0075;
+  if(capped) kgwk=kgNow*0.0075;
+  const dk=Math.max(0, p.goal==='build' ? p.goalKg-kgNow : kgNow-p.goalKg);
+  const wk=kgwk>0?dk/kgwk:0;
+  const d=w=>{ const t=new Date(); t.setDate(t.getDate()+Math.round(w*7));
+    return t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+(w>52?' \u2019'+String(t.getFullYear()).slice(2):''); };
+  const conf=Math.max(35,Math.min(88,92-wk*1.0));
+  const el=id=>document.getElementById(id);
+  if(!el('lv_window')) return;
+  el('lv_daysv').textContent=days;
+  el('lv_defv').textContent=def;
+  el('lv_window').textContent = dk<=0 ? `${d(0)} — you're at goal` : `${d(Math.max(0,wk-2))} → ${d(wk+2)}`;
+  el('lv_weeks').textContent = dk<=0 ? `arrival achieved — phase 2 is live` : `~${Math.round(wk)} weeks · ${Math.round(conf)}% confidence band`;
+  el('lv_rate').textContent = `rate ${kgwk.toFixed(2)} kg/wk (${(kgwk/kgNow*100).toFixed(2)}% BW) — ` + (capped?'held at the muscle-loss line':'clean, under the cap');
+  el('lv_cap').textContent = capped ? `⚠ past the muscle-loss line at this deficit — the engine holds the honest rate instead of lying to you` : `the bigger this number, the faster — up to the muscle-loss line`;
+  el('lv_cap').style.color = capped ? 'var(--warn)' : '';
+  el('lv_confbar').style.width = conf+'%';
+};
+window.lvApply=()=>{
+  const days=+($('#lv_days')?.value||4), def=+($('#lv_def')?.value||400);
+  store.data.profile.lev={days,def}; store.save();
+  toast('Applied — the window on Home just moved');
+  go('home');
+};
+window.lvRevert=()=>{ store.data.profile.lev=null; store.save(); toast('Back to the engine defaults'); go('levers'); };
+
+/* ============ TRAIN (prescription + avatar + muscle map + program options) ============ */
 let RIR_CTX=null;
 routes['train'] = { tab:true, render(host){
-  const plan=store.data.plan;
+  const st=store.data, p=st.profile;
+  const plan=st.plan;
   const doneCount=plan.moves.reduce((n,m)=>n+m.done.length,0);
   const totalSets=plan.moves.reduce((n,m)=>n+m.sets,0);
+  const targetMuscles=[...new Set(plan.moves.flatMap(m=>m.muscles||muscleOf(m.name)))];
+  const injL=injSummary(p)||[];
   host.innerHTML=`
     <div class="row between mb">
-      <div><h2 style="font-size:24px;">${plan.name}</h2>
-      <div class="mut small">Prescribed for you · targets adjust as you log effort</div></div>
+      <div class="row" style="gap:12px;">
+        <img class="avsq" src="img/today.jpg" alt="your avatar, now">
+        <div><h2 style="font-size:22px;">${plan.name}</h2>
+        <div class="mut small">your avatar trains with you · ${arrNow()} kg now</div></div>
+      </div>
       <span class="chip">${doneCount}/${totalSets} sets</span>
+    </div>
+    <div class="card flat" style="padding:13px;">
+      <div class="tiny dim mb" style="margin-bottom:8px;">MUSCLES ON THE MENU TODAY</div>
+      <div class="musrow">${targetMuscles.map(m=>`<span class="muschip">${m}</span>`).join('')}</div>
+    </div>
+    <div class="seg sm" id="progseg">
+      ${[['fba','Full Body'],['ul','Upper/Lower'],['ppl','Push/Pull/Legs']].map(([k,l])=>
+        `<button class="${ (plan.prog||'fba')===k?'on':''}" onclick="swapProgram('${k}')">${l}</button>`).join('')}
     </div>
     ${plan.moves.map((m,mi)=>`
       <div class="exrow" id="ex-${mi}">
         <div style="min-width:0;">
           <div style="font-weight:700;font-size:15px;">${m.name}</div>
+          <div class="musrow" style="margin:6px 0 4px;">${(m.muscles||muscleOf(m.name)).map(x=>`<span class="muschip">${x}</span>`).join('')}</div>
           <div class="mut small" id="exhint-${mi}">${trainHint(m)}</div>
           ${m.swap&&!m.inj?`<div class="tiny dim">swap available: ${m.swap}</div>`:''}
+          ${m.inj?`<div class="tiny" style="color:var(--warn);margin-top:3px;">swapped for your ${m.inj}${injL.length?' — see the coach card below':''}</div>`:''}
         </div>
         <div class="sets">
           ${Array.from({length:m.sets},(_,si)=>{
@@ -568,23 +886,30 @@ routes['train'] = { tab:true, render(host){
               <small>SET</small>${si+1}</button>`;}).join('')}
         </div>
       </div>`).join('')}
+    ${injL.length?`<div class="card flat"><div class="tiny dim">PROGRAMMED AROUND YOUR PAIN HISTORY</div>
+      ${injL.map(x=>`<div class="small mt" style="padding-left:4px;">• ${x.label}${x.notes?`<div class="mut small" style="margin-top:2px;">"${x.notes}"</div>`:''}</div>`).join('')}
+      <div class="tiny dim mt">say it instead below — coach takes voice too</div></div>`:''}
     <div class="btnrow">
       <button class="btn sub" onclick="resetWorkout()">Reset session</button>
       <button class="btn" onclick="finishWorkout()">Finish workout</button>
     </div>
-    <div class="note">Tap a set when it's done, tell the RIR truth, and the next set's load adjusts — that's the MacroFactor Workouts mechanic, minus the paywall.</div>`;
+    <div class="note">Tap a set, tell the RIR truth, the next set's load adjusts. Avatar rides the header; every move shows what it's building.</div>`;
 }};
+window.swapProgram=(k)=>{
+  store.data.plan=buildPlan(store.data.profile,k); store.save();
+  toast(k==='fba'?'Full Body A — session rebuilt':k==='ul'?'Upper/Lower — session rebuilt':'Push day — session rebuilt');
+  go('train');
+};
 function trainHint(m){
   const next=m.done.length;
   if(next>=m.sets) return `${m.kg} kg × ${m.reps} · all sets logged`;
   let kg=m.kg;
-  // replay RIR adaptations up to the next set
   for(let i=0;i<m.rirs.length;i++) kg=ENG.nextLoad(kg,m.rirs[i]);
   return `Set ${next+1}: ${kg} kg × ${m.reps}` + (m.rirs.length? ` · adapted from ${m.kg}`:'');
 }
 window.setTap=(mi,si)=>{
   const m=store.data.plan.moves[mi];
-  if(m.done.includes(si)){ // allow undo
+  if(m.done.includes(si)){
     m.done=m.done.filter(x=>x!==si);
     m.rirs=m.rirs.slice(0,m.done.length);
     store.save(); go('train'); return;
@@ -617,14 +942,19 @@ window.finishWorkout=()=>{
 };
 $('#rirsheet').addEventListener('click',e=>{ if(e.target.id==='rirsheet') $('#rirsheet').classList.remove('open'); });
 
-/* ============ FOOD (BWS photo scan mock + protein-first logging) ============ */
+/* ============ FOOD (photo scan mock + protein-first + meal approaches) ============ */
 routes['food'] = { tab:true, render(host){
-  const p=store.data.profile, pro=ENG.proteinTarget(p), tdee=ENG.tdee(p);
-  const budget=tdee-ENG.deficit(p);
+  const st=store.data, p=st.profile, pro=ENG.proteinTarget(p);
+  const budget=ENG.dailyBudget(p);
+  const d=ENG.deficit(p);
   const t=todayTotals();
   const today=new Date().toISOString().slice(0,10);
-  const items=(store.data.foods||[]).filter(x=>x.d===today);
+  const items=(st.foods||[]).filter(x=>x.d===today);
   const pct=(v,m)=>Math.min(100,Math.round(v/m*100));
+  const sample=[['Breakfast — eggs + oats',Math.round(budget*0.25),Math.round(pro*0.3)],
+    ['Lunch — chicken bowl',Math.round(budget*0.35),Math.round(pro*0.4)],
+    ['Snack — yogurt + fruit',Math.round(budget*0.12),Math.round(pro*0.15)],
+    ['Dinner — fish + rice + veg',Math.round(budget*0.28),Math.round(pro*0.3)]];
   host.innerHTML=`
     <h2 style="font-size:24px;margin-bottom:4px;">Food</h2>
     <div class="mut small mb">Protein is the hero. The rest keeps score.</div>
@@ -640,6 +970,17 @@ routes['food'] = { tab:true, render(host){
         <div class="bar grow"><i style="width:${pct(t.fa,Math.round(budget*0.28/9))}%;background:var(--ok)"></i></div>
         <span class="val">${Math.round(t.fa)}g</span></div>
     </div>
+    <div class="seg sm mb">
+      ${[['protein','Protein-first'],['sample','Sample day']].map(([k,l])=>
+        `<button class="${p.approach===k?'on':''}" onclick="setApproach('${k}')">${l}</button>`).join('')}
+    </div>
+    ${p.approach==='sample'?`
+      <div class="card flat"><div class="tiny dim mb" style="margin-bottom:8px;">A TEMPLATE DAY AT YOUR NUMBERS</div>
+        ${sample.map(([n,k,pp])=>`<div class="row between small" style="padding:6px 0;">
+          <span>${n}</span><span class="num mut">${k} kcal · ${pp}g P</span></div>`).join('')}
+        <div class="tiny dim mt">tap any meal to log it as-is — or scan your own plate</div>
+        <div class="grid2 mt">${sample.map(([n,k,pp],i)=>`<button class="btn sub" onclick="quickAdd(${esc(JSON.stringify('Template: '+n))},${k},${pp},0,0)">+ ${n.split(' — ')[0]}</button>`).join('')}</div>
+      </div>`:''}
     <button class="btn" onclick="scanMeal()">📷 Scan a meal — AI estimate (demo)</button>
     <div class="grid2 mt">
       <button class="btn sub" onclick="quickAdd('Protein shake',320,50,8,5)">+ Shake · 50g P</button>
@@ -651,8 +992,9 @@ routes['food'] = { tab:true, render(host){
       ${items.map(x=>`<div class="row between small" style="padding:5px 0;">
         <span>${x.name}${x.est?' <span class="dim">· est.</span>':''}</span>
         <span class="num mut">${x.kcal} kcal · ${x.p}g P</span></div>`).join('')}</div>`:''}
-    <div class="note">Photo scan returns a labeled <b>estimate</b> — the closed loop absorbs small errors, so honesty beats precision. Estimates show as <b>est.</b> forever. Nothing uploads; the photo never leaves the phone.</div>`;
+    <div class="note">Photo scan returns a labeled <b>estimate</b> — the closed loop absorbs small errors, so honesty beats precision. Nothing uploads; the photo never leaves the phone.</div>`;
 }};
+window.setApproach=(k)=>{ store.data.profile.approach=k; store.save(); go('food'); };
 window.scanMeal=()=>{
   const demos=[['Burrito bowl',640,42,68,21],['Salmon + rice',560,40,52,18],['Steak + potatoes',720,55,45,32],['Greek yogurt + berries',280,24,22,6]];
   const pick=demos[Math.floor(Math.random()*demos.length)];
@@ -665,36 +1007,50 @@ function addFood(name,kcal,p,c,fa,est){
   store.save(); go('food');
 }
 
-/* ============ CHECK-IN (MacroFactor weekly re-measure) ============ */
+/* ============ CHECK-IN (weekly re-measure + tracking mode + waist) ============ */
 routes['checkin'] = { tab:true, render(host){
-  const p=store.data.profile;
-  const w=store.data.weights;
+  const st=store.data, p=st.profile;
+  const w=st.weights;
   const last=w[w.length-1], first=w[0];
   const tdee=ENG.tdee(p);
-  const wkRate=(first.kg-last.kg)/Math.max(1,(w.length-1)); // kg/wk avg
+  const wkRate=(first.kg-last.kg)/Math.max(1,(w.length-1));
   const target=p.kg*0.005;
-  const drift=wkRate-target; // + = losing too fast, − = too slow
+  const drift=wkRate-target;
   const adj = w.length>=2 ? (Math.abs(drift)<target*0.25 ? 0 : (drift<0?-110:+90)) : 0;
+  const arr=ENG.arrival(st);
+  const waist=(w.filter(x=>x.waist).slice(-1)[0]);
   host.innerHTML=`
-    <h2 style="font-size:24px;margin-bottom:4px;">Weekly check-in</h2>
-    <div class="mut small mb">The re-measure. This is where the estimate gets honest.</div>
+    <h2 style="font-size:24px;margin-bottom:4px;">Weekly check-in — the re-measure</h2>
+    <div class="mut small mb">This is where the estimate gets honest.</div>
     <div class="card">
       ${sparkSVG(w)}
       <div class="row between tiny dim mt"><span>5 wks ago</span><span>trend, not any single morning</span><span>today</span></div>
       ${w.some(x=>x.sample)?'<div class="tiny dim mt">earlier points are sample data — they age out as your real check-ins land</div>':''}
+    </div>
+    <div class="card flat">
+      <div class="tiny dim">HOW LOOSE IS YOUR TRACKING?</div>
+      <div class="seg sm mt">
+        <button class="${p.mode!=='min'?'on':''}" onclick="setMode('full')">Log everything</button>
+        <button class="${p.mode==='min'?'on':''}" onclick="setMode('min')">Scale-first</button>
+      </div>
+      <div class="note" style="padding:8px 0 0;">${p.mode==='min'
+        ? '<b>Scale-first:</b> 2–3 weigh-ins a week + nothing else. The engine re-measures your burn from the scale trend alone — meals and workouts become optional accelerators. The avatar and the arrival window keep adjusting off the trend.'
+        : 'Log-everything mode: meals, RIR and weigh-ins feed the loop. Scale-first (weigh-ins only) works too — the scale is the truth-anchor either way.'}</div>
+      ${arr.slip?`<div class="tiny" style="color:var(--warn);margin-top:8px;">${arr.slip} over-budget day${arr.slip>1?'s':''} in the last 14 — the window on Home drifted right accordingly.</div>`:''}
     </div>
     <div class="statrow">
       <div class="stat"><div class="v num">${last.kg}</div><div class="k">Latest kg</div></div>
       <div class="stat"><div class="v num ${wkRate>0?'volt':''}">${wkRate>0?'−':'+'}${Math.abs(wkRate).toFixed(2)}</div><div class="k">kg / week</div></div>
       <div class="stat"><div class="v num">−${target.toFixed(2)}</div><div class="k">Target rate</div></div>
     </div>
+    ${waist?`<div class="tiny dim" style="margin:8px 4px;"><b style="color:var(--ink);">Last waist: ${waist.waist} cm</b> (${waist.d}) — tape beats nothing when you skip meals</div>`:''}
     <div class="card flat mt">
       <div class="tiny dim">MEASURED EXPENDITURE</div>
       <div class="row between mt">
         <div><span class="num" style="font-size:26px;">≈ ${tdee.toLocaleString()}</span> <span class="mut small">kcal/day</span></div>
         <div class="chip"><span class="dot"></span>measured, not guessed</div>
       </div>
-      <div class="note" style="padding:8px 0 0;">Back-calculated from what you ate × what the scale did — MacroFactor's core trick. Watches estimate burn badly, so we don't ask them to.</div>
+      <div class="note" style="padding:8px 0 0;">Back-calculated from what you ate × what the scale did. Watches estimate burn badly, so we don't ask them to.</div>
     </div>
     <div class="card">
       <div class="tiny dim">NEXT WEEK'S PLAN</div>
@@ -702,16 +1058,20 @@ routes['checkin'] = { tab:true, render(host){
         ? `<div class="mt small">Trend is inside the band — <b>nothing changes</b>. Same calories, same deficit. Boring is the product working.</div>`
         : `<div class="mt small">Trend is ${adj<0?'slower':'faster'} than the honest rate → calories <b class="num">${adj>0?'+':'−'}${Math.abs(adj)}</b>/day next week. Small moves, re-measured in 7 days.</div>`}
       <div class="seg sm mt">
-        <button class="on">Coached</button><button>Collaborative</button><button>Manual</button>
+        ${[['coached','Coached'],['collab','Collaborative'],['manual','Manual']].map(([k,l])=>
+          `<button class="${((st.prefs.mfMode)||'coached')===k?'on':''}" onclick="setMfMode('${k}')">${l}</button>`).join('')}
       </div>
     </div>
     <label class="lab">Log this morning's weight (kg)</label>
     <div class="row">
       <input class="field grow" type="number" step="0.1" id="ci_kg" placeholder="${last.kg}">
-      <button class="btn" style="width:110px;" onclick="logWeight()">Log</button>
+      <input class="field" type="number" step="0.5" id="ci_waist" placeholder="waist cm" style="width:110px;">
+      <button class="btn" style="width:86px;" onclick="logWeight()">Log</button>
     </div>
     <div style="height:10px"></div>`;
 }};
+window.setMode=(m)=>{ store.data.profile.mode=m; store.save(); toast(m==='min'?'Scale-first — weigh-ins carry it all':'Full logging on'); go('checkin'); };
+window.setMfMode=(m)=>{ store.data.prefs.mfMode=m; store.save(); go('checkin'); };
 function sparkSVG(w){
   const W=340,H=80,P=8;
   const kgs=w.map(x=>x.kg), lo=Math.min(...kgs)-0.4, hi=Math.max(...kgs)+0.4;
@@ -727,84 +1087,190 @@ function sparkSVG(w){
   </svg>`;
 }
 window.logWeight=()=>{
-  const v=parseFloat($('#ci_kg').value);
+  const v=parseFloat($('#ci_kg')?.value);
+  const ws=parseFloat($('#ci_waist')?.value);
   if(!v||v<40||v>250){ toast('That number looks off — try again'); return; }
-  store.data.weights.push({d:new Date().toISOString().slice(0,10),kg:v});
-  store.save();
-  toast('Logged. The band just got a little narrower.');
+  const e={d:new Date().toISOString().slice(0,10),kg:v};
+  if(ws && ws>40 && ws<200) e.waist=ws;
+  store.data.weights.push(e); store.save();
+  toast('Logged. The window just re-aimed.');
   go('checkin');
 };
 
-/* ============ COACH (Jeremy-AI analog — canned, honest, engine-aware) ============ */
+/* ============ COACH (speak OR type OR tap — answers read the engine) ============ */
 routes['coach'] = { tab:true, render(host){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const st=store.data, p=st.profile;
   host.innerHTML=`
     <h2 style="font-size:24px;margin-bottom:4px;">Coach</h2>
-    <div class="mut small mb">Answers from your actual numbers. Demo uses canned lines — the real one reads the engine.</div>
+    <div class="mut small mb">Answers from your actual numbers. Type it, tap it${SR?', or hit the mic and say it':''}. Demo reads canned lines off your engine.</div>
     <div class="chatscroll" id="chat">
-      <div class="chatb coach">You're ~${ENG.arrival(store.data.profile).weeks} weeks out on the honest math. Ask me anything the engine can see.</div>
+      <div class="chatb coach">You're ~${ENG.arrival(st).weeks} weeks out on the honest math. Ask me anything the engine can see.</div>
     </div>
     <div class="row wrap" style="gap:8px;">
-      ${["Why did my calories change?","I'm stalling — panic?","Can I swap an exercise?","Why is protein the hero?","What happens at goal weight?"].map(q=>
-        `<button class="chip" onclick="ask('${q}')">${q}</button>`).join('')}
+      ${["Why did my calories change?","I'm stalling — panic?","Can I swap an exercise?","Why is protein the hero?","What happens at goal?","How does the window move?"].map(q=>
+        `<button class="chip" onclick="ask('${q.replace(/'/g,"\\'")}')">${q}</button>`).join('')}
+    </div>
+    <div class="coachin">
+      <button class="micb" id="coachmic" title="speak" onclick="coachMic()">🎙</button>
+      <input class="field grow" type="text" id="coachin" placeholder="${SR?'ask anything — or tap the mic':'ask anything'}" onkeydown="if(event.key==='Enter')coachSend()">
+      <button class="btn sub" style="width:70px;" onclick="coachSend()">Send</button>
     </div>`;
 }};
-window.ask=(q)=>{
-  const p=store.data.profile;
-  const A={
-    "Why did my calories change?": `Your burn is <b>measured weekly</b>: food logged × scale trend → real expenditure. When last week's trend ran hot or cold, targets move ${'~'}100 kcal. It's not mood — it's arithmetic. In Coached mode it just happens; Collaborative asks you first.`,
-    "I'm stalling — panic?": `No. A "stall" is usually water lying to the scale for 7–10 days. The band in your check-in chart exists for exactly this: trend inside band = <b>nothing changes</b>. We adjust on 2+ weeks of real drift, never on one bad Tuesday.`,
-    "Can I swap an exercise?": `Any move with an ache has a mapped swap — your plan already did it where you flagged ${p.injuries.filter(i=>i!=='none').join(', ')||'nothing'}. Same muscle, friendlier joint. The load prescription carries over.`,
-    "Why is protein the hero?": `Because the goal isn't weight loss — it's <b>fat loss with muscle intact</b>. ${ENG.proteinTarget(p)}g/day + lifting tells your body which tissue to burn. That's the whole muscle-preservation play, and it's why the score on Home says HOLDING.`,
-    "What happens at goal weight?": `The part no other app builds: <b>maintenance, for the decade</b>. Targets flip from deficit to your measured burn, the band becomes the guardrail, and drift gets caught at 3 days — not at +9 kg. Arriving is the beginning of the product, not the end.`
-  };
-  const c=$('#chat');
-  c.insertAdjacentHTML('beforeend',`<div class="chatb you">${q}</div><div class="chatb coach">${A[q]}</div>`);
-  c.scrollTop=c.scrollHeight;
+window.coachSend=()=>{
+  const el=$('#coachin'); const q=(el?.value||'').trim();
+  if(!q){ toast('Type it, tap a chip, or hit the mic'); return; }
+  el.value='';
+  renderTurn(q);
 };
+window.coachMic=()=>{ srFill('coachin'); };
+window.ask=(q)=>renderTurn(q);
+function renderTurn(q){
+  const c=$('#chat'); if(!c){ go('coach'); return; }
+  c.insertAdjacentHTML('beforeend',`<div class="chatb you">${esc(q)}</div><div class="chatb coach">${coachAnswer(q)}</div>`);
+  c.scrollTop=c.scrollHeight;
+}
+function coachAnswer(q){
+  const st=store.data, p=st.profile;
+  const arr=ENG.arrival(st), d=ENG.deficit(p), pro=ENG.proteinTarget(p);
+  const s=q.toLowerCase();
+  const has=(...w)=>w.some(x=>s.includes(x));
+  if(has('calorie','burn','deficit','surplus','tdee'))
+    return `Your burn is <b>measured weekly</b>: food logged × scale trend → real expenditure (${arr.weeks===0?'—':'≈'+ENG.tdee(p).toLocaleString()+' kcal today'}). When last week's trend ran hot or cold, targets move ~100 kcal. It's arithmetic, not mood. In Coached mode it just happens; Collaborative asks you first.`;
+  if(has('stall','stuck','plateau','panic'))
+    return `No. A "stall" is usually water lying to the scale for 7–10 days. The band in your check-in chart exists for exactly this: trend inside band = <b>nothing changes</b>. We adjust on 2+ weeks of real drift, never on one bad Tuesday.`;
+  if(has('swap','exercise','hurt','injur','pain','shoulder','knee','back','wrist','hip','ankle')){
+    const L=injSummary(p)||[];
+    return L.length
+      ? `You gave me the details, so the program already respects them: ${L.map(x=>'<b>'+x.label+'</b>').join('<br>')}. Every flagged move carries a mapped swap — same muscle, friendlier joint — and the load prescription carries over.` 
+      : `You told me nothing hurts, so nothing's swapped. If something flares: check-in → injuries get edited any time, and the program rebuilds around them.`;
+  }
+  if(has('protein'))
+    return `Because the goal isn't weight loss — it's <b>fat loss with muscle intact</b>. ${pro}g/day + lifting tells your body which tissue to burn. That's the muscle-preservation play, and it's why Home says HOLDING.`;
+  if(has('goal','maintain','decade','band','after'))
+    return `The part nothing else builds: <b>maintenance, for the decade</b>. Your first three missions just get you to ${p.goalKg} kg — arriving is chapter 1. Phase 2 flips targets to your measured burn, the band (±3%) becomes the guardrail, drift gets caught at 3 days, and weeks-in-band becomes the metric you brag about in year 5.`;
+  if(has('window','date','timeline','push','late','miss','log'))
+    return `Your window is <b>${arr.lo} → ${arr.hi}</b> (~${arr.weeks} weeks, ±4). It re-aims on almost every log: meals in-budget and sessions finished pull it left; over-budget days (${arr.slip} in the last 14) push it right. Miss a week entirely? The trend still finds you at the scale — the window just widens. Strict is free speed.`;
+  if(has('lean','body fat','bf','measure','waist','tape'))
+    return p.bf!=null
+      ? `You gave me ${p.bf}% — lean mass ≈ <b>${ENG.lbm(p)} kg</b>. Weight trend + waist tape keep the picture honest between scans; anything that keeps the trend true keeps the window true.`
+      : `No BF% on file — that's fine, the engine runs without it. If you get a number (DEXA, calipers, smart scale), add it in check-ins and the lean-mass math sharpens. Waist tape in check-ins is the cheap secondary signal.`;
+  return `Here's what I can see right now: burn ≈ <b>${ENG.tdee(p).toLocaleString()}</b> kcal/day, protein floor <b>${pro}g</b>, arrival <b>${arr.lo} → ${arr.hi}</b> (${arr.slip?arr.slip+' over-budget day'+(arr.slip>1?'s':'')+' in the last 14':'clean 14 days'}), tracking in <b>${p.mode==='min'?'scale-first':'full-log'}</b> mode. Ask me about any of those — or tap a chip below.`;
+}
 
-/* ============ YOU (the decade — YouTrain maintenance engine) ============ */
+/* ============ YOU — avatar + milestone scrub (A/B/C always) + the decade ============ */
 routes['you'] = { tab:true, render(host){
-  const p=store.data.profile, arr=ENG.arrival(p);
-  const created=new Date(store.data.ts);
+  const st=store.data, p=st.profile, arr=ENG.arrival(st);
+  const created=new Date(st.ts);
+  const maint=isMaint(st);
+  const firstW=st.weights[0].kg;
+  const tNow=Math.max(0,Math.min(100, Math.abs(arr.kgNow-firstW)/Math.max(.1,Math.abs(p.goalKg-firstW))*100 ));
+  const waist=(st.weights.filter(x=>x.waist).slice(-1)[0]);
   host.innerHTML=`
     <h2 style="font-size:24px;margin-bottom:4px;">You, over time</h2>
     <div class="mut small mb">Day 0: ${fmtDate(created)} — the origin never leaves.</div>
-    <div class="card">
-      <div class="row between tiny dim"><span>THEN</span><span>NOW</span><span>GOAL</span><span>THE DECADE</span></div>
-      <svg viewBox="0 0 340 90" class="mt" style="width:100%;">
-        <rect x="235" y="18" width="98" height="54" rx="8" fill="rgba(216,255,61,.08)"/>
-        <line x1="20" y1="30" x2="120" y2="42" stroke="var(--dim)" stroke-width="2"/>
-        <line x1="120" y1="42" x2="235" y2="60" stroke="var(--acc)" stroke-width="2.5"/>
-        <line x1="235" y1="60" x2="333" y2="60" stroke="var(--ok)" stroke-width="2.5" stroke-dasharray="5 5"/>
-        <circle cx="20" cy="30" r="4" fill="var(--dim)"/><circle cx="120" cy="42" r="4.5" fill="var(--acc)"/>
-        <circle cx="235" cy="60" r="4.5" fill="var(--ink)"/>
-        <text x="20" y="18" fill="var(--dim)" font-size="10" font-weight="700">${p.kg} kg</text>
-        <text x="110" y="58" fill="var(--acc)" font-size="10" font-weight="700">${(p.kg-0.6).toFixed(1)}</text>
-        <text x="222" y="80" fill="var(--ink)" font-size="10" font-weight="700">${p.goalKg} kg</text>
-      </svg>
-      <div class="tiny dim" style="margin-top:6px;">goal band = ±3% · <b style="color:var(--ok);">weeks-in-band</b> is the hero metric of the decade</div>
+    <div class="hero scrub" id="yhero">
+      <img src="img/today.jpg" id="yimg_now" alt="now figure">
+      <img src="img/dream-body.jpg" id="yimg_dream" style="opacity:${tNow/100}" alt="projected figure">
+      <div class="projchip" id="yproj">NOW · ${arr.kgNow} kg</div>
+      <div class="stagepanel">
+        <div class="scrubrow">
+          <button class="stop" id="ystop_then" onclick="yStop('then')"><span class="k">A · Then</span><span class="v">${p.kg}</span></button>
+          <button class="stop now sel" id="ystop_now" onclick="yStop('now')"><span class="k">B · Now</span><span class="v">${arr.kgNow}</span></button>
+          <button class="stop" id="ystop_dream" onclick="yStop('dream')"><span class="k">C · Dream</span><span class="v">${p.goalKg}</span></button>
+        </div>
+        <input type="range" min="0" max="100" step="1" value="${Math.round(tNow)}" id="yscrub"
+          oninput="yScrub(this.value)" style="--fill:${tNow}%">
+        <div class="row between tiny dim"><span>day 0</span><span id="ymslabel">slide to see you at milestones</span><span>goal</span></div>
+      </div>
     </div>
-    <div class="grid2">
-      <div class="stat"><div class="v num">${arr.weeks}</div><div class="k">Weeks to arrival (mid)</div></div>
-      <div class="stat"><div class="v num">0</div><div class="k">Weeks in band — starts at goal</div></div>
+    <div class="tiny dim" style="margin:0 4px;">scrub = projected you at that point of the timeline (stand-in figures; the real avatar morphs once it renders from your photos)</div>
+    <div class="statrow mt">
+      <div class="stat"><div class="v num">${maint?'0':arr.weeks}</div><div class="k">${maint?'Weeks in band':'Weeks to arrival (mid)'}</div></div>
+      <div class="stat"><div class="v num">${ENG.lbm(p)?ENG.lbm(p)+'<span class="dim" style="font-size:12px;"> kg LBM</span>':'—'}</div><div class="k">${p.bf!=null?'from your '+p.bf+'%':'add BF% to unlock'}</div></div>
     </div>
     <div class="card mt">
+      <div class="tiny dim" style="color:${maint?'var(--ok)':'var(--acc)'};">${maint?'PHASE 2 · LIVE':'MISSIONS 1–3 = THE BEGINNING'}</div>
+      <div class="small mt" style="line-height:1.55;">
+        ${maint
+          ? `You made it. The real work starts now: <b>stay inside the band (±3%)</b>. Weeks-in-band is the decade's scoreboard, the drift alarm is your early-warning system, and maintenance billing auto-halves. This is the product.`
+          : `These first missions only get you <b>to ${p.goalKg} kg inside the band</b> — arriving is chapter 1, not the story. The real work is Phase 2: <b>staying there for the decade</b>, weeks-in-band as the scoreboard, drift caught at 3 days not +9 kg. That's what this app is for.`}
+      </div>
+    </div>
+    <div class="card">
       <div class="row between"><b>Drift alarm</b><span class="chip" onclick="driftDemo()"><span class="dot" style="background:var(--warn);"></span>demo</span></div>
       <div class="note" style="padding:8px 0 2px;" id="driftmsg">In maintenance, 3 days above the band top pings you while it's still a nudge — not at +9 kg when it's a crisis. ~80% of regain is a detection problem.</div>
     </div>
     <div class="card flat">
-      <div class="tiny dim">THE BET</div>
-      <div class="small mt" style="line-height:1.55;">Every tracker on the store optimizes the <i>cut</i>. This one is built so that arriving at ${p.goalKg} kg is <b>chapter 1 of the maintenance decade</b> — honest band, weekly re-measure, drift caught early. That's the part BWS and MacroFactor don't ship.</div>
+      <div class="tiny dim">TRACKING, LOOSELY</div>
+      <div class="small mt" style="line-height:1.5;">Mode: <b>${p.mode==='min'?'Scale-first':'Log everything'}</b> · waist ${waist?`<b>${waist.waist} cm</b> (${waist.d})`:'not logged yet'}
+        <br>${p.mode==='min'?'The scale alone keeps the avatar and the window honest — no meal logging required.':'Change to Scale-first any time in check-ins — weigh-ins alone carry the whole loop.'}</div>
+      <button class="btn sub mt" onclick="go('checkin')">Adjust tracking →</button>
     </div>
     <button class="btn ghost mt" onclick="wipeDemo()">Reset demo (wipe device data)</button>`;
 }};
+window.yScrub=(tRaw)=>{
+  const t=Math.max(0,Math.min(100,+tRaw));
+  const st=store.data, p=st.profile;
+  const firstW=st.weights[0].kg, goal=p.goalKg;
+  const kg=firstW+(goal-firstW)*t/100;
+  const img=$('#yimg_dream'), chip=$('#yproj'), lab=$('#ymslabel'), sl=$('#yscrub');
+  if(img) img.style.opacity=(t/100).toFixed(3);
+  if(sl) sl.style.setProperty('--fill',t+'%');
+  const arrP=ENG.arrival(st);
+  const rate=arrP.kgNow*arrP.ratePct;
+  const rem=Math.abs(kg-arrP.kgNow);
+  const wks=rate>0?Math.round(rem/rate):0;
+  const dt=new Date(); dt.setDate(dt.getDate()+wks*7);
+  const name=t<=0?'DAY 0':t<33?'EARLY':t<67?'HALFWAY':t<99?'CLOSE':'GOAL';
+  if(chip) chip.textContent=`${name} · ${kg.toFixed(1)} kg · ~${wks} wks`;
+  if(lab) lab.textContent=t<=0?'origin — where this started':`projected: ${dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  ['then','now','dream'].forEach(s=>{
+    const el=$('#ystop_'+s); if(el) el.classList.toggle('sel',(s==='then'&&t<=2)||(s==='now'&&t>2&&t<98)||(s==='dream'&&t>=98));
+  });
+};
+window.yStop=(s)=>{
+  const st=store.data, p=st.profile, arr=ENG.arrival(st);
+  const firstW=st.weights[0].kg;
+  const tNow=Math.max(0,Math.min(100, Math.abs(arr.kgNow-firstW)/Math.max(.1,Math.abs(p.goalKg-firstW))*100 ));
+  const sl=$('#yscrub');
+  const hero=$('#yhero'), imgs=$('#yimg_now'), imgd=$('#yimg_dream');
+  if(s==='then'){
+    if(sl){ sl.value=0; window.yScrub(0); }
+    if(imgs) imgs.style.filter='saturate(.55) contrast(.92)';
+    const chip=$('#yproj'); if(chip) chip.textContent=`THEN · ${p.kg} kg · day 0`;
+  } else if(s==='now'){
+    if(sl){ sl.value=Math.round(tNow); window.yScrub(Math.round(tNow)); }
+    if(imgs) imgs.style.filter='';
+    const chip=$('#yproj'); if(chip) chip.textContent=`NOW · ${arr.kgNow} kg`;
+  } else {
+    if(sl){ sl.value=100; window.yScrub(100); }
+    if(imgs) imgs.style.filter='';
+    const chip=$('#yproj'); if(chip) chip.textContent=`DREAM · ${p.goalKg} kg`;
+  }
+};
 window.driftDemo=()=>{ $('#driftmsg').innerHTML='<b style="color:var(--warn);">Demo ping:</b> "Scale\'s been 1.1% over band for 3 days. Not a crisis — a Tuesday fix: protein + a walk, re-check Friday."'; };
-window.wipeDemo=()=>{ if(confirm('Wipe FRANKENFIT demo data on this device?')){ store.clear(); QUIZ.step=0; location.hash=''; go('quiz'); } };
+window.wipeDemo=()=>{ if(confirm('Wipe demo data on this device?')){ store.clear(); QUIZ.step=0; location.hash=''; go('quiz'); } };
 
 /* ============ boot ============ */
 store.load();
+store.data=normalizeData(store.data);
 const params=new URLSearchParams(location.search);
-if(params.get('demo')==='1' && !(store.data && store.data.onboarded)){ commitProfile(); }
+if(params.get('demo')==='1' && !(store.data && store.data.onboarded)){
+  QUIZ.a.bf=24.5;
+  QUIZ.a.injdetail=[{part:'shoulder',side:'r',what:'Old impingement, barbell bench',ago:'years',status:'light',notes:'Overhead presses irritate it. Neutral grip fine.'}];
+  commitProfile();
+  const D=store.data;
+  D.profile.bf=24.5;
+  D.plan=buildPlan(D.profile,'fba');
+  const d1=new Date(Date.now()-2*864e5).toISOString().slice(0,10);
+  const d2=new Date(Date.now()-6*864e5).toISOString().slice(0,10);
+  const budget=ENG.dailyBudget(D.profile);
+  D.foods.push(
+    {d:d1,name:'Pizza night (over budget)',kcal:Math.round(budget*1.30),p:40,c:120,fa:30,est:true},
+    {d:d2,name:'Buffet dinner (over budget)',kcal:Math.round(budget*1.25),p:50,c:110,fa:35,est:true});
+  store.save();
+}
 const startRoute=(location.hash||'').replace('#/','');
 go(store.data && store.data.onboarded ? (routes[startRoute]?startRoute:'home') : 'quiz');
 window.addEventListener('hashchange',()=>{ const r=(location.hash||'').replace('#/',''); if(r!==curRoute) go(r); });
