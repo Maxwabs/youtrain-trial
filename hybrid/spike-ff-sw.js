@@ -1,7 +1,7 @@
 /* FRANKENFIT hybrid — offline shell. Cache-first for the app + its assets.
    Relative paths so the same file works at doc root (LAN) and under any
    Pages subpath. Bump the version to force a refresh after edits. */
-const VERSION = 'ff-v2';
+const VERSION = 'ff-v3';
 const ASSETS = [
   'spike-clone-hybrid.html',
   'spike-clone-hybrid.webmanifest',
