@@ -6,7 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0A0B0D">
-<title>YouTrain</title>
+<title>Frankenfit — working demo</title>
+<meta name="apple-mobile-web-app-title" content="Frankenfit">
 <link rel="manifest" href="spike-clone-hybrid.webmanifest">
 <link rel="apple-touch-icon" href="spike-ff-icons/180.png">
 <style>
@@ -224,8 +225,8 @@ input[type=range].grey{opacity:.45;}
 <body>
 <div id="app">
   <div class="topbar">
-    <div class="brand">FRANKEN<em>FIT</em></div>
-    <div class="demopill">HYBRID V3 · STAND-INS + DEMO DATA</div>
+    <div class="brand"><svg width="20" height="20" viewBox="0 0 200 200" style="vertical-align:-4px;margin-right:6px;"><rect width="200" height="200" fill="#14161A"/><circle cx="100" cy="40" r="21" fill="#D8FF3D"/><path d="M60 82 Q60 68 74 68 L126 68 Q140 68 140 82 L135 152 Q134 162 124 162 L76 162 Q66 162 65 152 Z" fill="#D8FF3D"/><rect x="58" y="98" width="84" height="7" fill="#14161A"/><rect x="58" y="126" width="84" height="7" fill="#14161A"/><g stroke="#D8FF3D" stroke-width="3.5" stroke-linecap="round"><line x1="72" y1="94" x2="72" y2="109"/><line x1="88" y1="94" x2="88" y2="109"/><line x1="104" y1="94" x2="104" y2="109"/><line x1="120" y1="94" x2="120" y2="109"/><line x1="72" y1="122" x2="72" y2="137"/><line x1="88" y1="122" x2="88" y2="137"/><line x1="104" y1="122" x2="104" y2="137"/><line x1="120" y1="122" x2="120" y2="137"/></g></svg>FRANKEN<em>FIT</em></div>
+    <div class="demopill">WORKING DEMO</div>
   </div>
   <main id="routes"></main>
   <div class="footer-tag">stitched from the best · on-device only</div>
@@ -470,7 +471,8 @@ routes['quiz'] = { tab:false, render(host){
     { t:"What's the mission?", sub:"Pick the one that matters. You can change it later — the plan, calories and dates all follow.", body:()=>`
       <button class="pick ${a.goal==='lose'?'on':''}" onclick="qzSet('goal','lose')"><b>Mission A — Lose the fat</b><span>Get to a lean body and stay there</span></button>
       <button class="pick ${a.goal==='recomp'?'on':''}" onclick="qzSet('goal','recomp')"><b>Mission B — Recomp</b><span>Lose fat and build muscle at once — slower, steadier</span></button>
-      <button class="pick ${a.goal==='build'?'on':''}" onclick="qzSet('goal','build')"><b>Mission C — Build muscle</b><span>Strength first, scale second</span></button>` },
+      <button class="pick ${a.goal==='build'?'on':''}" onclick="qzSet('goal','build')"><b>Mission C — Build muscle</b><span>Strength first, scale second</span></button>
+      <div class="row" style="margin-top:12px;"><button class="chip" onclick="seedDemo()">→ Skip ahead: load a demo account</button></div>` },
     { t:"The honest numbers", sub:"This builds your expenditure estimate. Bands, not false precision. Body fat is optional — it sharpens the lean-mass math.", body:()=>`
       <div class="seg" id="qseg">
         <button class="${a.sex==='m'?'on':''}" onclick="qzSeg('m')">Male</button>
@@ -1256,7 +1258,8 @@ window.wipeDemo=()=>{ if(confirm('Wipe demo data on this device?')){ store.clear
 store.load();
 store.data=normalizeData(store.data);
 const params=new URLSearchParams(location.search);
-if(params.get('demo')==='1' && !(store.data && store.data.onboarded)){
+window.seedDemo=()=>{
+  if(store.data && store.data.onboarded){ toast('A profile is already live — use Reset on the You tab first'); return; }
   QUIZ.a.bf=24.5;
   QUIZ.a.injdetail=[{part:'shoulder',side:'r',what:'Old impingement, barbell bench',ago:'years',status:'light',notes:'Overhead presses irritate it. Neutral grip fine.'}];
   commitProfile();
@@ -1270,7 +1273,10 @@ if(params.get('demo')==='1' && !(store.data && store.data.onboarded)){
     {d:d1,name:'Pizza night (over budget)',kcal:Math.round(budget*1.30),p:40,c:120,fa:30,est:true},
     {d:d2,name:'Buffet dinner (over budget)',kcal:Math.round(budget*1.25),p:50,c:110,fa:35,est:true});
   store.save();
-}
+  go('home');
+  toast('Sample account loaded — demo data, all on-device');
+};
+if(params.get('demo')==='1' && !(store.data && store.data.onboarded)) seedDemo();
 const startRoute=(location.hash||'').replace('#/','');
 go(store.data && store.data.onboarded ? (routes[startRoute]?startRoute:'home') : 'quiz');
 window.addEventListener('hashchange',()=>{ const r=(location.hash||'').replace('#/',''); if(r!==curRoute) go(r); });
