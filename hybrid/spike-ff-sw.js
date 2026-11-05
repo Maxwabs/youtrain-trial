@@ -1,7 +1,8 @@
-/* FRANKENFIT hybrid — offline shell. Cache-first for the app + its assets.
-   Relative paths so the same file works at doc root (LAN) and under any
-   Pages subpath. Bump the version to force a refresh after edits. */
-const VERSION = 'ff-v5';
+/* FRANKENFIT hybrid — offline shell. Network-first for the app + its pages
+   (publishes show up on the next launch, no stale cache), cache-first for
+   static assets. Relative paths so the same file works at doc root (LAN) and
+   under any Pages subpath. Bump the version to force a refresh after edits. */
+const VERSION = 'ff-v6';
 const ASSETS = [
   'spike-clone-hybrid.html',
   'spike-clone-hybrid.webmanifest',
@@ -24,9 +25,25 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  const isNav = e.request.mode === 'navigate' ||
+    (url.origin === location.origin && url.pathname.endsWith('.html'));
+  if (isNav) {
+    e.respondWith(
+      fetch(e.request).then(resp => {
+        if (resp.ok) {
+          const copy = resp.clone();
+          caches.open(VERSION).then(c => c.put(e.request, copy));
+        }
+        return resp;
+      }).catch(() => caches.match(e.request, { ignoreSearch: true })
+                     .then(hit => hit || caches.match('spike-clone-hybrid.html')))
+    );
+    return;
+  }
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(hit => hit || fetch(e.request).then(resp => {
-      if (resp.ok && new URL(e.request.url).origin === location.origin) {
+      if (resp.ok && url.origin === location.origin) {
         const copy = resp.clone();
         caches.open(VERSION).then(c => c.put(e.request, copy));
       }
