@@ -220,6 +220,13 @@ input[type=range].grey{opacity:.45;}
   letter-spacing:.06em;color:var(--acc-ink);background:var(--acc);border-radius:99px;padding:6px 11px;text-align:right;}
 .footer-tag{text-align:center;color:var(--dim);font-size:9px;letter-spacing:.08em;
   text-transform:uppercase;margin-top:22px;font-weight:700;}
+/* coach v1: typing indicator + relay bits */
+.chatb .dots{display:inline-flex;gap:4px;padding:2px 0;}
+.chatb .dots span{width:6px;height:6px;border-radius:50%;background:var(--dim);animation:dotb 1.2s infinite;}
+.chatb .dots span:nth-child(2){animation-delay:.15s;}
+.chatb .dots span:nth-child(3){animation-delay:.3s;}
+@keyframes dotb{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
+.chatb .note{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.4;}
 </style>
 </head>
 <body>
@@ -247,7 +254,7 @@ input[type=range].grey{opacity:.45;}
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('spike-ff-sw.js').catch(()=>{}); }
 </script>
 <script>
-/* ============ FRANKENFIT hybrid v0.3 — engine + data ============ */
+/* ============ FRANKENFIT hybrid v0.4-coach — engine + data ============ */
 const $ = s => document.querySelector(s);
 const LS_KEY = 'frankenfit.v1';
 
@@ -271,6 +278,7 @@ function normalizeData(d){
   }
   if(p.lev===undefined) p.lev=null;   // levers applied: {days, def}
   if(d.prefs===undefined) d.prefs={};
+  if(d.chats===undefined) d.chats=[];  // coach history — device-local like everything else
   (d.plan&&d.plan.moves?d.plan.moves:[]).forEach(m=>{ if(!m.muscles) m.muscles=muscleOf(m.name); });
   return d;
 }
@@ -603,7 +611,7 @@ function commitProfile(){
   store.data={ onboarded:true, ts:Date.now(),
     profile:{sex:a.sex,age:a.age,cm:a.cm,kg:a.kg,goalKg:a.goalKg,daysPerWeek:a.daysPerWeek,equip:a.equip,
              injuries,injdetail:a.injdetail,bf:a.bf,goal:a.goal,mode:'full',approach:'protein',lev:null},
-    weights:seedWeights(a.kg), foods:[], plan:buildPlan(a), checkins:[], tier:null, prefs:{} };
+    weights:seedWeights(a.kg), foods:[], plan:buildPlan(a), checkins:[], tier:null, prefs:{}, chats:[] };
   store.save();
 }
 function seedWeights(kg){ // sample history until real check-ins replace it (LABELED sample in UI)
@@ -1099,15 +1107,73 @@ window.logWeight=()=>{
   go('checkin');
 };
 
-/* ============ COACH (speak OR type OR tap — answers read the engine) ============ */
+/* ============ COACH v1 — the talker lane (type + speech, no vision) ============
+   Relay → cheap text model, locked v0.4 design. History lives on device
+   (last 60 turns). Flat fair-use cap: 80 relayed turns/day, resets midnight —
+   never token-metered. No relay set = canned engine answers, and any relay
+   error falls back to the engine, labeled honestly on the reply. */
+
+let relayOpen=false;
+const CHAT_CAP=80;        /* fair-use: relayed turns/day — flat, never metered */
+const CHAT_KEEP=60;       /* turns kept on device */
+function chatRelay(){
+  const pc=store.data.prefs.chat||(store.data.prefs.chat={url:'',key:'',t:'',n:0});
+  if(!pc.id) pc.id=Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+  return pc;
+}
+function liveRelay(){ const c=chatRelay(); return !!(c.url.trim()&&c.key.trim()); }
+function turnsToday(){ const c=chatRelay(); return c.t===todayISO()?c.n:0; }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function bumpTurn(){ const c=chatRelay(); if(c.t!==todayISO()){c.t=todayISO();c.n=0;} c.n++; store.save(); }
+function chatPush(r,t){
+  const d=store.data; if(!d.chats) d.chats=[];
+  d.chats.push({r,t});
+  if(d.chats.length>CHAT_KEEP) d.chats=d.chats.slice(-CHAT_KEEP);
+  store.save();
+}
+function histPack(){ return (store.data.chats||[]).slice(-12).map(x=>({role:x.r==='y'?'user':'assistant',content:x.t})); }
+function timeoutSignal(ms){ const a=new AbortController(); setTimeout(()=>a.abort(),ms); return a.signal; }
+function fmtReply(t){
+  let s=esc(t);
+  s=s.replace(/\*\*([^*]+?)\*\*/g,'<b>$1</b>');
+  /* canned engine answers store real <b> tags — re-honor just that one tag,
+     everything else stays escaped (live replies come through as **bold**) */
+  s=s.replace(/&lt;(\/?)b&gt;/g,'<$1b>');
+  return s;
+}
+function buildCtx(){
+  const st=store.data, p=st.profile, arr=ENG.arrival(st);
+  const plan=(st.plan&&st.plan.moves)||[];
+  return JSON.stringify({
+    v:1, day:new Date().toISOString().slice(0,10),
+    profile:{sex:p.sex,age:p.age,cm:p.cm,kg:p.kg,goalKg:p.goalKg,
+      mission:{lose:'cut',recomp:'recomp',build:'build'}[p.goal]||p.goal,
+      daysPerWeek:ENG.days(p),equip:p.equip,bf:p.bf,trackingMode:p.mode,approach:p.approach,
+      leversApplied:p.lev||null},
+    injuries:(injSummary(p)||[]).map(x=>({label:x.label,notes:x.notes})),
+    program:{name:st.plan?st.plan.name:'none',moves:plan.map(m=>({n:m.name,kg:m.kg,reps:m.reps,sets:m.sets,done:(m.done||[]).length}))},
+    numbers:{tdee:ENG.tdee(p),dailyBudget:ENG.dailyBudget(p),dailyDeficit:ENG.deficit(p),
+      proteinTarget:ENG.proteinTarget(p),lbm:ENG.lbm(p),
+      arrival:{weeks:arr.weeks,window:arr.lo+' → '+arr.hi,overBudgetDays:arr.slip}},
+    weights:(st.weights||[]).slice(-10),
+    foods:(st.foods||[]).slice(-10).map(f=>({d:f.d,name:f.name,kcal:f.kcal,p:f.p}))
+  });
+}
+function buildSys(){
+  return 'You are the Coach inside a body-recomp app. Voice: plain, warm, zero hype, anti-fear. Rules: bands, not false precision (estimates are estimates; the scale is the truth anchor). Never moralize slips — one bad day changes nothing; changes trigger on 2+ weeks of real drift. You may suggest plan tweaks in plain language (swap an exercise, add protein, adjust budget ~100 kcal) but you CANNOT change app data in this version — point the user to Home / Train / Check-in for that. No medical diagnoses; persistent pain → a professional; you only help program around injuries. Never comment on a body negatively (timeline and habits are fair game, the person is not). Questions about numbers must only use the JSON data provided, never invent any. Keep it short: 2–6 sentences, plain text, one **bold** number max.';
+}
 routes['coach'] = { tab:true, render(host){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const st=store.data, p=st.profile;
+  const live=liveRelay();
+  const hist=(store.data.chats||[]).slice(-30);
+  const cfg=chatRelay();
   host.innerHTML=`
     <h2 style="font-size:24px;margin-bottom:4px;">Coach</h2>
-    <div class="mut small mb">Answers from your actual numbers. Type it, tap it${SR?', or hit the mic and say it':''}. Demo reads canned lines off your engine.</div>
+    <div class="mut small mb">Answers from your actual numbers. Type it, tap it${SR?', or say it to the mic':''}. ${live?'<b style="color:var(--ok);">LIVE</b> — relaying to the model, your data included':'canned demo engine — add the relay below to go live'}</div>
     <div class="chatscroll" id="chat">
-      <div class="chatb coach">You're ~${ENG.arrival(st).weeks} weeks out on the honest math. Ask me anything the engine can see.</div>
+      ${hist.length?hist.map(x=>`<div class="chatb ${x.r==='y'?'you':'coach'}">${x.r==='y'?esc(x.t):fmtReply(x.t)}</div>`).join('')
+        :`<div class="chatb coach">You're ~${ENG.arrival(st).weeks} weeks out on the honest math. Ask me anything the engine can see.</div>`}
     </div>
     <div class="row wrap" style="gap:8px;">
       ${["Why did my calories change?","I'm stalling — panic?","Can I swap an exercise?","Why is protein the hero?","What happens at goal?","How does the window move?"].map(q=>
@@ -1117,22 +1183,81 @@ routes['coach'] = { tab:true, render(host){
       <button class="micb" id="coachmic" title="speak" onclick="coachMic()">🎙</button>
       <input class="field grow" type="text" id="coachin" placeholder="${SR?'ask anything — or tap the mic':'ask anything'}" onkeydown="if(event.key==='Enter')coachSend()">
       <button class="btn sub" style="width:70px;" onclick="coachSend()">Send</button>
+    </div>
+    <div class="card mt" style="padding:12px;">
+      <div class="row between"><b style="font-size:13px;">Live relay</b><button class="chip" onclick="toggleRelay()">${relayOpen?'close':'config'}</button></div>
+      <div class="tiny dim" style="margin-top:5px;">${live?'live: <b>'+turnsToday()+'</b>/80 turns today (fair-use, flat — never metered)':'canned mode · turns only count once the relay is set'}</div>
+      ${relayOpen?`
+      <div style="margin-top:8px;">
+        <label class="lab2">Relay URL (Cloudflare Worker)</label><input class="field" id="rl_url" value="${esc(cfg.url)}" style="width:100%;">
+        <label class="lab2">Relay secret (X-FF-Key header)</label><input class="field" id="rl_key" type="password" value="${esc(cfg.key)}" style="width:100%;">
+        <button class="btn sub mt" style="width:100%;" onclick="relaySave()">Save relay — stays on this device only</button>
+      </div>`:''}
     </div>`;
 }};
 window.coachSend=()=>{
   const el=$('#coachin'); const q=(el?.value||'').trim();
   if(!q){ toast('Type it, tap a chip, or hit the mic'); return; }
   el.value='';
-  renderTurn(q);
+  window.ask(q);
 };
 window.coachMic=()=>{ srFill('coachin'); };
-window.ask=(q)=>renderTurn(q);
-function renderTurn(q){
+window.ask=window.sendTurn=async(q)=>{
   const c=$('#chat'); if(!c){ go('coach'); return; }
-  c.insertAdjacentHTML('beforeend',`<div class="chatb you">${esc(q)}</div><div class="chatb coach">${coachAnswer(q)}</div>`);
+  q=(q||'').trim(); if(!q) return;
+  chatPush('y',q);
+  c.insertAdjacentHTML('beforeend',`<div class="chatb you">${esc(q)}</div>`);
   c.scrollTop=c.scrollHeight;
-}
-function coachAnswer(q){
+  if(!liveRelay()){
+    const fb=cannedAnswer(q);
+    chatPush('c',fb);
+    c.insertAdjacentHTML('beforeend',`<div class="chatb coach">${fb}</div>`);
+    c.scrollTop=c.scrollHeight;
+    return;
+  }
+  const rel=chatRelay();
+  if(turnsToday()>=CHAT_CAP){
+    c.insertAdjacentHTML('beforeend',`<div class="chatb coach"><div class="tiny">Daily coach cap hit (${CHAT_CAP}/${CHAT_CAP}). Resets at midnight — the on-device engine still answers in canned mode.</div></div>`);
+    c.scrollTop=c.scrollHeight;
+    toast('Fair-use cap: 80 coach turns today');
+    return;
+  }
+  bumpTurn();
+  const typing=document.createElement('div');
+  typing.className='chatb coach'; typing.id='typingb';
+  typing.innerHTML='<span class="dots"><span></span><span></span><span></span></span>';
+  c.appendChild(typing); c.scrollTop=c.scrollHeight;
+  try{
+    const res=await fetch(rel.url.trim(),{method:'POST',
+      headers:{'Content-Type':'application/json','X-FF-Key':rel.key.trim()},
+      body:JSON.stringify({did:rel.id,sys:buildSys(),ctx:buildCtx(),history:histPack(),msg:q}),
+      signal:timeoutSignal(30000)});
+    let j={}; try{ j=await res.json(); }catch(e){}
+    if(!res.ok) throw new Error(j.error||('HTTP '+res.status));
+    const reply=String(j.reply||'').trim();
+    if(!reply) throw new Error('empty reply');
+    chatPush('c',reply);
+    typing.remove();
+    c.insertAdjacentHTML('beforeend',`<div class="chatb coach">${fmtReply(reply)}</div>`);
+  }catch(e){
+    typing.remove();
+    const fb=cannedAnswer(q);
+    chatPush('c',fb);
+    c.insertAdjacentHTML('beforeend',`<div class="chatb coach">${fb}<div style="margin-top:8px;font-size:11px;color:var(--warn);">relay fell through (${esc(String(e&&e.message||e))}) — answered by the on-device engine</div></div>`);
+    toast('Relay trouble — engine answered instead');
+  }
+  c.scrollTop=c.scrollHeight;
+};
+window.toggleRelay=()=>{ relayOpen=!relayOpen; go('coach'); };
+window.relaySave=()=>{
+  const u=$('#rl_url'), k=$('#rl_key');
+  const c=chatRelay();
+  c.url=u?u.value.trim():''; c.key=k?k.value.trim():'';
+  store.save();
+  toast(liveRelay()?'Relay saved — coach is live (data relays now)':'Relay cleared — canned engine only');
+  relayOpen=true; go('coach');
+};
+function cannedAnswer(q){
   const st=store.data, p=st.profile;
   const arr=ENG.arrival(st), d=ENG.deficit(p), pro=ENG.proteinTarget(p);
   const s=q.toLowerCase();
