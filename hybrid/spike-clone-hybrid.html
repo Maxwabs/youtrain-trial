@@ -227,6 +227,7 @@ input[type=range].grey{opacity:.45;}
 .chatb .dots span:nth-child(3){animation-delay:.3s;}
 @keyframes dotb{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
 .chatb .note{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.4;}
+.chatb.coach .prop{border-top:1px solid var(--line);margin-top:8px;padding-top:6px;}
 </style>
 </head>
 <body>
@@ -1186,9 +1187,12 @@ routes['coach'] = { tab:true, render(host){
     </div>
     <div class="card mt" style="padding:12px;">
       <div class="row between"><b style="font-size:13px;">Live relay</b><button class="chip" onclick="toggleRelay()">${relayOpen?'close':'config'}</button></div>
-      <div class="tiny dim" style="margin-top:5px;">${live?'live: <b>'+turnsToday()+'</b>/80 turns today (fair-use, flat — never metered)':'canned mode · turns only count once the relay is set'}</div>
+      <div class="tiny dim" style="margin-top:5px;">${live?'live: <b>'+turnsToday()+'</b>/80 turns today (fair-use) · your chat is remembered on our worker so the coach remembers between visits — your body data stays on this phone':'canned mode · turns only count once the relay is set'}</div>
       ${relayOpen?`
       <div style="margin-top:8px;">
+        <label class="lab2">Setup code (URL + secret, one line)</label><input class="field" id="rl_code" placeholder="paste the code from Hermes" style="width:100%;">
+        <button class="btn sub mt" style="width:100%;" onclick="relayQuick()">Use setup code</button>
+        <div class="tiny dim" style="margin:8px 0 4px;">or set the two fields by hand:</div>
         <label class="lab2">Relay URL (Cloudflare Worker)</label><input class="field" id="rl_url" value="${esc(cfg.url)}" style="width:100%;">
         <label class="lab2">Relay secret (X-FF-Key header)</label><input class="field" id="rl_key" type="password" value="${esc(cfg.key)}" style="width:100%;">
         <button class="btn sub mt" style="width:100%;" onclick="relaySave()">Save relay — stays on this device only</button>
@@ -1239,6 +1243,7 @@ window.ask=window.sendTurn=async(q)=>{
     chatPush('c',reply);
     typing.remove();
     c.insertAdjacentHTML('beforeend',`<div class="chatb coach">${fmtReply(reply)}</div>`);
+    if(Array.isArray(j.proposals) && j.proposals.length) window.renderProposals(j.proposals);
   }catch(e){
     typing.remove();
     const fb=cannedAnswer(q);
@@ -1249,12 +1254,51 @@ window.ask=window.sendTurn=async(q)=>{
   c.scrollTop=c.scrollHeight;
 };
 window.toggleRelay=()=>{ relayOpen=!relayOpen; go('coach'); };
+window.renderProposals=(list)=>{
+  const c=$('#chat'); if(!c) return;
+  window.__props=(list||[]).map(p=>({kind:String(p.kind||'note'),label:String(p.label||'Coach suggestion'),value:String(p.value||'')}));
+  const cards=window.__props.map((p,i)=>`
+    <div class="prop" data-i="${i}">
+      <div class="small" style="line-height:1.45;">${esc(p.label)}${p.reason?` <span class="tiny dim">(${esc(String(p.reason||''))})</span>`:''}</div>
+      <button class="btn sub mt" style="width:100%;" onclick="applyProposal(${i})">Apply — confirm first</button>
+    </div>`).join('');
+  c.insertAdjacentHTML('beforeend',`<div class="chatb coach" id="proplist"><div class="tiny dim">Coach proposes — you confirm before anything is written:</div>${cards}</div>`);
+  c.scrollTop=c.scrollHeight;
+};
+window.applyProposal=(i)=>{
+  const p=(window.__props||[])[i]; if(!p) return;
+  if(!confirm('Apply this coach change?\n\n'+p.label)) return;
+  const d=store.data, prof=d.profile;
+  if(p.kind==='budget' && p.value){
+    const v=parseInt(String(p.value).replace(/[^0-9.]/g,''),10);
+    if(!v || v<1200 || v>6000){ toast('That number looks off — nothing written'); return; }
+    prof.lev={...((prof.lev)||{}), def:Math.max(0, v-ENG.tdee(prof)), days:ENG.days(prof)};
+    store.save();
+    toast('Budget set to '+v+' kcal — the window re-aimed');
+  } else {
+    const notes=d.prefs.coachNotes||(d.prefs.coachNotes=[]);
+    notes.push({d:new Date().toISOString().slice(0,10), label:p.label, value:p.value});
+    store.save();
+    toast('Saved to your coach notes');
+  }
+  const el=$('#proplist'); if(el) el.remove();
+};
 window.relaySave=()=>{
   const u=$('#rl_url'), k=$('#rl_key');
   const c=chatRelay();
   c.url=u?u.value.trim():''; c.key=k?k.value.trim():'';
   store.save();
   toast(liveRelay()?'Relay saved — coach is live (data relays now)':'Relay cleared — canned engine only');
+  relayOpen=true; go('coach');
+};
+window.relayQuick=()=>{
+  const el=$('#rl_code'); const raw=(el?el.value:'').trim();
+  const sp=raw.split(/\s+/);
+  if(sp.length<2){ toast('Paste the setup code — URL then secret'); return; }
+  const c=chatRelay();
+  c.url=sp[0]; c.key=sp.slice(1).join(' ');
+  store.save();
+  toast(liveRelay()?'Setup code applied — coach is LIVE':'Code applied, secret looks off — check the relay fields');
   relayOpen=true; go('coach');
 };
 function cannedAnswer(q){
