@@ -2,7 +2,7 @@
    (publishes show up on the next launch, no stale cache), cache-first for
    static assets. Relative paths so the same file works at doc root (LAN) and
    under any Pages subpath. Bump the version to force a refresh after edits. */
-const VERSION = 'ff-v8';
+const VERSION = 'ff-v9';
 const ASSETS = [
   'spike-clone-hybrid.html',
   'spike-clone-hybrid.webmanifest',

@@ -1292,11 +1292,12 @@ window.relaySave=()=>{
   relayOpen=true; go('coach');
 };
 window.relayQuick=()=>{
-  const el=$('#rl_code'); const raw=(el?el.value:'').trim();
-  const sp=raw.split(/\s+/);
-  if(sp.length<2){ toast('Paste the setup code — URL then secret'); return; }
+  const el=$('#rl_code'); let raw=(el?el.value:'').trim();
+  if(raw.startsWith('FFSETUP')) raw=raw.slice(7).trim();      // QR marker from Hermes
+  const m=raw.match(/(https?:\/\/\S+)\s+(\S+)/);
+  if(!m){ toast('Paste the setup code — URL then secret'); return; }
   const c=chatRelay();
-  c.url=sp[0]; c.key=sp.slice(1).join(' ');
+  c.url=m[1]; c.key=m[2];
   store.save();
   toast(liveRelay()?'Setup code applied — coach is LIVE':'Code applied, secret looks off — check the relay fields');
   relayOpen=true; go('coach');
