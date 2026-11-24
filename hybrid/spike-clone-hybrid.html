@@ -102,6 +102,15 @@ input[type=range].grey{opacity:.45;}
 .ring .trk{stroke:#232A34;}
 .ring .val{stroke:var(--acc);stroke-linecap:round;stroke-dasharray:251;
   animation:ringdraw 1.1s ease forwards;}
+/* activity rings — per-radius dasharray set inline via --dash */
+.rings .trk{stroke:#232A34;}
+.rings .val{stroke-linecap:round;stroke-dasharray:var(--dash,251);animation:ringdraw 1.1s ease forwards;}
+.rings .v-pro{stroke:var(--acc);}
+.rings .v-cal{stroke:var(--warn);}
+.rings .v-wod{stroke:var(--ok);}
+.ringleg{display:flex;gap:10px;justify-content:center;margin-top:8px;}
+.ringleg span{font-size:10px;letter-spacing:.04em;display:flex;align-items:center;gap:4px;}
+.ringleg i{width:8px;height:8px;border-radius:50%;display:inline-block;}
 
 .spark{width:100%;height:80px;display:block;}
 .spark .band{fill:rgba(216,255,61,.07);}
@@ -255,7 +264,7 @@ input[type=range].grey{opacity:.45;}
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('spike-ff-sw.js').catch(()=>{}); }
 </script>
 <script>
-/* ============ FRANKENFIT hybrid v0.4-coach — engine + data ============ */
+/* ============ FRANKENFIT hybrid v0.4.3 — coach + activity rings — engine + data ============ */
 const $ = s => document.querySelector(s);
 const LS_KEY = 'frankenfit.v1';
 
@@ -691,8 +700,16 @@ routes['home'] = { tab:true, render(host){
   const st=store.data, p=st.profile, arr=ENG.arrival(st), tdee=ENG.tdee(p);
   const pro=ENG.proteinTarget(p);
   const todays = todayTotals();
-  const ring = Math.min(1, todays.p/pro);
-  const ringOff = 251*(1-ring);
+  const calBudget=Math.max(1, ENG.dailyBudget(p));
+  const ses=(st.sessions||[]);
+  const wkStart=(()=>{ const t=new Date(); const wd=(t.getDay()+6)%7; const s=new Date(t); s.setDate(t.getDate()-wd); return s.toISOString().slice(0,10); })();
+  const wods=(()=>{ const seen=new Set(); ses.forEach(s=>{ if(s.d>=wkStart) seen.add(s.d); }); return seen.size; })();
+  const wodTgt=Math.max(1, Math.min(7, ENG.days(p)||3));
+  const rings=[
+    {k:'pro', r:40, dash:Math.round(2*Math.PI*40),  done:todays.p/pro,    leg:`<i style="background:var(--acc);"></i>PROTEIN · ${Math.round(todays.p)}/${pro}g`},
+    {k:'cal', r:31, dash:Math.round(2*Math.PI*31),  done:todays.k/calBudget, leg:`<i style="background:var(--warn);"></i>KCAL · ${Math.round(todays.k).toLocaleString()}/${calBudget.toLocaleString()}`},
+    {k:'wod', r:22, dash:Math.round(2*Math.PI*22),  done:wods/wodTgt,     leg:`<i style="background:var(--ok);"></i>SESSIONS · ${wods}/${wodTgt} wk`},
+  ];
   const maint=isMaint(st);
   const d=ENG.deficit(p);
   host.innerHTML=`
@@ -727,16 +744,20 @@ routes['home'] = { tab:true, render(host){
     </div>
     <div class="row" style="align-items:stretch;">
       <div class="card grow" style="text-align:center;">
-        <div style="position:relative;width:96px;margin:0 auto;">
+        <div style="position:relative;width:96px;margin:0 auto;" class="rings">
           <svg class="ring" width="96" height="96" viewBox="0 0 96 96">
-            <circle class="trk" cx="48" cy="48" r="40" fill="none" stroke-width="9"/>
-            <circle class="val" cx="48" cy="48" r="40" fill="none" stroke-width="9" style="--ring-off:${ringOff}"/>
+            ${rings.map(r=>{const cl=Math.max(0.005,Math.min(1,r.done)), off=(r.dash*(1-cl)).toFixed(1);
+              return `
+            <circle class="trk" cx="48" cy="48" r="${r.r}" fill="none" stroke-width="7"/>
+            <circle class="val v-${r.k}" cx="48" cy="48" r="${r.r}" fill="none" stroke-width="7"
+              style="stroke-dasharray:${r.dash};--ring-off:${off}"/>`;}).join('')}
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div class="num" style="font-size:19px;line-height:1;">${Math.round(todays.p)}<span class="dim" style="font-size:12px;">/${pro}g</span></div>
-            <div class="k tiny dim" style="margin-top:4px;">PROTEIN</div>
+            <div class="num" style="font-size:${wods?'16px':'19px'};line-height:1;">${wods}<span class="dim" style="font-size:12px;">/${wodTgt}</span></div>
+            <div class="k tiny dim" style="margin-top:3px;">SESSIONS</div>
           </div>
         </div>
+        <div class="ringleg">${rings.map(r=>'<span>'+r.leg+'</span>').join('')}</div>
       </div>
       <div class="grow">
         <div class="card flat" style="margin:0 0 10px;height:calc(50% - 5px);display:flex;flex-direction:column;justify-content:center;">
@@ -948,7 +969,11 @@ window.finishWorkout=()=>{
   const plan=store.data.plan;
   const done=plan.moves.reduce((n,m)=>n+m.done.length,0);
   const total=plan.moves.reduce((n,m)=>n+m.sets,0);
+  if(done>0){ if(!store.data.sessions) store.data.sessions=[];
+    store.data.sessions.push({d:new Date().toISOString().slice(0,10),sets:done,total});
+    if(store.data.sessions.length>120) store.data.sessions=store.data.sessions.slice(-120); }
   toast(done===total ? 'Session in the bank. The engine saw everything.' : `Logged ${done}/${total} — partial sessions count as data too`);
+  store.save();
   go('home');
 };
 $('#rirsheet').addEventListener('click',e=>{ if(e.target.id==='rirsheet') $('#rirsheet').classList.remove('open'); });
