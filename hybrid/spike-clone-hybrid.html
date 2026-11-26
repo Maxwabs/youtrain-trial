@@ -64,6 +64,8 @@ h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.02em;}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);}
 .btn.sub{background:var(--surf2);color:var(--ink);font-weight:600;font-size:14px;padding:13px;}
 .btnrow{display:flex;gap:10px;margin-top:14px;}
+.btnrow .btn{flex:1 1 0;min-width:0;}
+.stretchrow > .grow{min-width:0;}
 .btnrow .btn{margin:0;}
 
 .chip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:99px;
@@ -238,6 +240,14 @@ input[type=range].grey{opacity:.45;}
 .chatb .note{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.4;}
 .chatb.coach .prop{border-top:1px solid var(--line);margin-top:8px;padding-top:6px;}
 </style>
+<style>
+.injcard textarea.field{min-height:48px;resize:vertical;line-height:1.35;font-size:15px;}
+.injcard .lab2{margin-top:12px;}
+.splash{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px;padding:32px;}
+.splash .ffmark{width:118px;height:118px;border-radius:24px;box-shadow:0 0 50px rgba(216,255,61,.16);}
+.splash .ffword{font-weight:800;letter-spacing:.4em;font-size:25px;color:var(--acc);text-indent:.4em;}
+.splash .fftag{color:var(--mut);max-width:300px;line-height:1.5;font-size:15px;}
+</style>
 </head>
 <body>
 <div id="app">
@@ -361,7 +371,7 @@ const ENG = {
     const push=Math.min(2, slip*0.18);                   // window drifts right on over-budget weeks
     const eff=wk+push;
     const d=w=>{ const t=new Date(); t.setDate(t.getDate()+Math.round(w*7));
-      return t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+(w>52?' \u2019'+String(t.getFullYear()).slice(2):''); };
+      return t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' ’'+String(t.getFullYear()).slice(2); };
     return { weeks:Math.round(eff), lo:d(Math.max(0,eff-half)), hi:d(eff+half),
              conf: Math.max(35, Math.min(88, 92 - wk*1.0)),
              kgNow, slip, gain, ratePct };
@@ -375,6 +385,14 @@ const ENG = {
 };
 
 function fmtDate(d){ return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+/* ---- units: internal math stays kg forever; display follows the global lb/kg pref ---- */
+const UKEY='ff_unit_pref', LBK=2.20462;
+window.unitsOf=()=> (localStorage.getItem(UKEY)==='lb') ? 'lb' : 'kg';
+window.setUnits=(u)=>{ localStorage.setItem(UKEY,u); go(curRoute); };
+function dispKg(kg){ return unitsOf()==='kg' ? kg : +(kg*LBK).toFixed(1); }
+function WT(kg,d){ return dispKg(kg).toFixed(d==null?1:d); }
+function WTL(kg,d){ return WT(kg,d)+' '+unitsOf(); }
+function rateVal(a){ return unitsOf()==='kg' ? a : a*LBK; }
 function esc(s){ return (s==null?'':String(s)).replace(/[&"<>]/g,c=>({'&':'&amp;','"':'&quot;','<':'&lt;','>':'&gt;'}[c])); }
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),1800); }
@@ -448,6 +466,22 @@ const PLANS = {
       ['Lat Pulldown',0.6,'10',['Lats','Biceps']],
       ['Farmer Carry',0.5,'40m',['Grip','Traps','Core']]
     ]},
+  ulB: { name:'Lower — Day A', tag:'4 days/wk · lower half of the rotation',
+    moves:[
+      ['Back Squat',1.0,'6',['Quads','Glutes','Core'],'knee','Leg Press (knee-swap)'],
+      ['Romanian Deadlift',0.85,'8',['Hamstrings','Glutes','Low back'],'lowback','Hip Thrust (low-back-swap)'],
+      ['Leg Press',0.9,'10',['Quads','Glutes']],
+      ['Standing Calf Raise',0.4,'12',['Calves']],
+      ['Farmer Carry',0.5,'40m',['Grip','Traps','Core']]
+    ]},
+  ppull: { name:'Pull — Day A', tag:'PPL rotation · pull day',
+    moves:[
+      ['Lat Pulldown',0.6,'10',['Lats','Biceps']],
+      ['Chest-Supported Row',0.6,'10',['Lats','Rhomboids','Biceps']],
+      ['Face Pull',0.25,'14',['Rear delts','Traps']],
+      ['Biceps Curl',0.3,'12',['Biceps','Forearms']],
+      ['Farmer Carry',0.5,'40m',['Grip','Traps','Core']]
+    ]},
   ppl: { name:'Push — Day A', tag:'5–6 days/wk · push / pull / legs rotation',
     moves:[
       ['Bench Press',0.72,'8',['Chest','Triceps','Front delts'],'shoulder','Incline DB Press (shoulder-swap)'],
@@ -496,11 +530,15 @@ routes['quiz'] = { tab:false, render(host){
         <button class="${a.sex==='m'?'on':''}" onclick="qzSeg('m')">Male</button>
         <button class="${a.sex==='f'?'on':''}" onclick="qzSeg('f')">Female</button>
       </div>
+      <div class="seg sm" style="margin-bottom:12px;">
+        <button class="${unitsOf()==='kg'?'on':''}" onclick="setUnits('kg')">kg</button>
+        <button class="${unitsOf()==='lb'?'on':''}" onclick="setUnits('lb')">lb</button>
+      </div>
       <div class="grid2">
         <div><label class="lab">Age</label><input class="field" type="number" id="q_age" value="${a.age}"></div>
         <div><label class="lab">Height (cm)</label><input class="field" type="number" id="q_cm" value="${a.cm}"></div>
-        <div><label class="lab">Weight (kg)</label><input class="field" type="number" step="0.1" id="q_kg" value="${a.kg}"></div>
-        <div><label class="lab">Goal (kg)</label><input class="field" type="number" step="0.1" id="q_goal" value="${a.goalKg}"></div>
+        <div><label class="lab">Weight (${unitsOf()})</label><input class="field" type="number" step="0.1" id="q_kg" value="${dispKg(a.kg)}"></div>
+        <div><label class="lab">Goal (${unitsOf()})</label><input class="field" type="number" step="0.1" id="q_goal" value="${dispKg(a.goalKg)}"></div>
         <div><label class="lab">Body fat % <span style="text-transform:none">— optional</span></label><input class="field" type="number" step="0.5" id="q_bf" placeholder="don't know = fine" value="${a.bf==null?'':a.bf}"></div>
       </div>
       <div class="note">Know your number (DEXA, calipers, a good scale)? In it goes — lean-mass stats and the muscle engine use it. Leave it blank and everything still works.</div>` },
@@ -530,7 +568,8 @@ routes['quiz'] = { tab:false, render(host){
         <div class="stat"><div class="v num">${d<0?'−':'+'}${Math.abs(d)}</div><div class="k">${d<0?'Daily deficit':'Daily surplus'}</div></div>
         <div class="stat"><div class="v num">${pro}g</div><div class="k">Protein floor</div></div>
       </div>
-      ${p.bf!=null?`<div class="tiny dim" style="text-align:center;margin-top:8px;">lean mass ≈ ${ENG.lbm(p)} kg off your ${p.bf}% — locked in</div>`:''}
+      ${p.bf!=null?`<div class="tiny dim" style="text-align:center;margin-top:8px;">lean mass ≈ ${WTL(ENG.lbm(p),0)} off your ${p.bf}% — locked in</div>`:''}
+      <div class="btnrow"><button class="btn ghost" style="width:100%;" onclick="openPlanBreak()">See the plan — schedule + how injuries are worked around →</button></div>
       <div class="note">The window re-aims itself almost daily — every meal and workout logged moves it. Be strict and it pulls left; coast and it drifts right. And hear this: <b>these three missions are just the beginning.</b> Arriving is chapter 1 — the real work is the maintenance decade, staying inside your band. That's the part no other app builds.</div>`; } }
   ];
   const s=steps[QUIZ.step];
@@ -577,14 +616,14 @@ function injBody(a){
       </div>
       <label class="lab2">What happened</label>
       <div class="row">
-        <input class="field grow" id="qi_what_${i}" type="text" value="${esc(x.what)}" placeholder="e.g. disc tweak deadlifting heavy"
-          oninput="qzInjF(${i},'what',this.value)">
+        <textarea class="field grow" id="qi_what_${i}" rows="2" placeholder="e.g. disc tweak deadlifting heavy — say everything: what, when, treatment"
+          oninput="qzInjF(${i},'what',this.value)">${esc(x.what)}</textarea>
         <button class="micb" title="speak it" onclick="srFill('qi_what_${i}')">🎙</button>
       </div>
       <label class="lab2">What still works / what to avoid</label>
       <div class="row">
-        <input class="field grow" id="qi_notes_${i}" type="text" value="${esc(x.notes)}" placeholder="e.g. overhead hurts, neutral grip fine"
-          oninput="qzInjF(${i},'notes',this.value)">
+        <textarea class="field grow" id="qi_notes_${i}" rows="2" placeholder="e.g. overhead hurts, neutral grip fine — tell the coach the specifics"
+          oninput="qzInjF(${i},'notes',this.value)">${esc(x.notes)}</textarea>
         <button class="micb" title="speak it" onclick="srFill('qi_notes_${i}')">🎙</button>
       </div>
     </div>`).join('');
@@ -608,6 +647,9 @@ window.qzBack=()=>{ QUIZ.step=Math.max(0,QUIZ.step-1); go('quiz'); };
 window.qzNext=(final)=>{
   if(QUIZ.step===1){ // harvest stats
     ['age','cm','kg','goal'].forEach(k=>{ const el=$('#q_'+k); if(el) QUIZ.a[k==='goal'?'goalKg':k]=parseFloat(el.value)||QUIZ.a[k==='goal'?'goalKg':k]; });
+    if(unitsOf()==='lb'){ const qk=$('#q_kg'), qg=$('#q_goal');
+      if(qk&&qk.value!==''&&parseFloat(qk.value)) QUIZ.a.kg=+((parseFloat(qk.value))/LBK).toFixed(1);
+      if(qg&&qg.value!==''&&parseFloat(qg.value)) QUIZ.a.goalKg=+((parseFloat(qg.value))/LBK).toFixed(1); }
     const bfEl=$('#q_bf'); QUIZ.a.bf = bfEl && bfEl.value!=='' ? Math.min(70,Math.max(2,parseFloat(bfEl.value))) : null;
     if(QUIZ.a.goal==='build'){ if(QUIZ.a.goalKg<=QUIZ.a.kg){ toast('Build mission: set a goal at or above your current weight'); return; } }
     else if(QUIZ.a.goalKg>=QUIZ.a.kg){ toast('Goal below current weight — flip the goal or the mission'); return; }
@@ -645,7 +687,7 @@ routes['paywall'] = { tab:false, render(host){
   ];
   host.innerHTML=`
     <div style="padding-top:10px;">
-      <span class="chip"><span class="dot"></span>YOUR PLAN: ${arr.weeks} WEEKS → ${p.goalKg} kg</span>
+      <span class="chip"><span class="dot"></span>YOUR PLAN: ${arr.weeks} WEEKS → ${WTL(p.goalKg,1)}</span>
       <h2 style="font-size:29px;margin:14px 0 4px;">Pay what you can.</h2>
       <div class="mut small mb">Full app at every level — no features held hostage, sponsored included. The tiers exist so broke people train free and flush people cover them.</div>
       <div class="card flat" style="padding:14px;">
@@ -715,12 +757,12 @@ routes['home'] = { tab:true, render(host){
   host.innerHTML=`
     <div class="hero" id="hero">
       <img id="figimg" src="img/dream-body.jpg" alt="goal-body stand-in figure">
-      <div class="stagechip" id="figchip">DREAM · ${p.goalKg} kg</div>
+      <div class="stagechip" id="figchip">DREAM · ${WT(p.goalKg,1)} ${unitsOf()}</div>
       <div class="stagepanel">
         <div class="scrubrow">
-          <button class="stop" data-s="then" onclick="figStop('then')"><span class="k">A · Then</span><span class="v">${p.kg}</span></button>
-          <button class="stop now" data-s="now" onclick="figStop('now')"><span class="k">B · Now</span><span class="v">${arr.kgNow}</span></button>
-          <button class="stop sel" data-s="dream" onclick="figStop('dream')"><span class="k">C · Dream</span><span class="v">${p.goalKg}</span></button>
+          <button class="stop" data-s="then" onclick="figStop('then')"><span class="k">A · Then</span><span class="v">${WT(p.kg,1)}</span></button>
+          <button class="stop now" data-s="now" onclick="figStop('now')"><span class="k">B · Now</span><span class="v">${WT(arr.kgNow,1)}</span></button>
+          <button class="stop sel" data-s="dream" onclick="figStop('dream')"><span class="k">C · Dream</span><span class="v">${WT(p.goalKg,1)}</span></button>
         </div>
       </div>
     </div>
@@ -742,7 +784,7 @@ routes['home'] = { tab:true, render(host){
       `}
       <button class="btn ghost mt" style="width:100%;" onclick="go('levers')">Play with the levers →</button>
     </div>
-    <div class="row" style="align-items:stretch;">
+    <div class="row stretchrow" style="align-items:stretch;">
       <div class="card grow" style="text-align:center;">
         <div style="position:relative;width:96px;margin:0 auto;" class="rings">
           <svg class="ring" width="96" height="96" viewBox="0 0 96 96">
@@ -768,7 +810,7 @@ routes['home'] = { tab:true, render(host){
         <div class="card flat" style="margin:0;height:calc(50% - 5px);display:flex;flex-direction:column;justify-content:center;">
           <div class="k tiny dim">MUSCLE STATUS</div>
           <div class="num" style="font-size:22px;color:var(--ok);">HOLDING</div>
-          <div class="tiny dim">${p.bf!=null?`est. LBM ${ENG.lbm(p)} kg · `:''}protein on target · ${ENG.days(p)} strength days</div>
+          <div class="tiny dim">${p.bf!=null?`est. LBM ${WTL(ENG.lbm(p),0)} · `:''}protein on target · ${ENG.days(p)} strength days</div>
         </div>
       </div>
     </div>
@@ -778,6 +820,7 @@ routes['home'] = { tab:true, render(host){
     <div class="btnrow">
       <button class="btn ghost" onclick="go('food')">Log food</button>
       <button class="btn ghost" onclick="go('checkin')">Check-in</button>
+      <button class="btn ghost" onclick="openPlanBreak()">Plan</button>
     </div>
     <div class="note">${p.mode==='min'
       ? 'Scale-first mode: your weigh-ins alone keep the avatar and window honest — meals here are optional accelerators.'
@@ -786,9 +829,9 @@ routes['home'] = { tab:true, render(host){
 window.figStop=(s)=>{
   const img=$('#figimg'), hero=$('#hero'), chip=$('#figchip');
   const st=store.data, p=st.profile;
-  const map={then:{src:'img/today.jpg',mute:true,label:'THEN · '+p.kg+' kg'},
-             now:{src:'img/today.jpg',mute:false,label:'NOW · '+arrNow()+' kg'},
-             dream:{src:'img/dream-body.jpg',mute:false,label:'DREAM · '+p.goalKg+' kg'}};
+  const map={then:{src:'img/today.jpg',mute:true,label:'THEN · '+WT(p.kg,1)+' '+unitsOf()},
+             now:{src:'img/today.jpg',mute:false,label:'NOW · '+WT(arrNow(),1)+' '+unitsOf()},
+             dream:{src:'img/dream-body.jpg',mute:false,label:'DREAM · '+WT(p.goalKg,1)+' '+unitsOf()}};
   const m=map[s];
   img.style.opacity=0;
   setTimeout(()=>{ img.src=m.src; hero.classList.toggle('muted',!!m.mute);
@@ -854,7 +897,7 @@ window.lvMove=()=>{
   const dk=Math.max(0, p.goal==='build' ? p.goalKg-kgNow : kgNow-p.goalKg);
   const wk=kgwk>0?dk/kgwk:0;
   const d=w=>{ const t=new Date(); t.setDate(t.getDate()+Math.round(w*7));
-    return t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+(w>52?' \u2019'+String(t.getFullYear()).slice(2):''); };
+    return t.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' ’'+String(t.getFullYear()).slice(2); };
   const conf=Math.max(35,Math.min(88,92-wk*1.0));
   const el=id=>document.getElementById(id);
   if(!el('lv_window')) return;
@@ -862,7 +905,7 @@ window.lvMove=()=>{
   el('lv_defv').textContent=def;
   el('lv_window').textContent = dk<=0 ? `${d(0)} — you're at goal` : `${d(Math.max(0,wk-2))} → ${d(wk+2)}`;
   el('lv_weeks').textContent = dk<=0 ? `arrival achieved — phase 2 is live` : `~${Math.round(wk)} weeks · ${Math.round(conf)}% confidence band`;
-  el('lv_rate').textContent = `rate ${kgwk.toFixed(2)} kg/wk (${(kgwk/kgNow*100).toFixed(2)}% BW) — ` + (capped?'held at the muscle-loss line':'clean, under the cap');
+  el('lv_rate').textContent = `rate ${rateVal(kgwk).toFixed(1)} ${unitsOf()}/wk (${(kgwk/kgNow*100).toFixed(2)}% BW) — ` + (capped?'held at the muscle-loss line':'clean, under the cap');
   el('lv_cap').textContent = capped ? `⚠ past the muscle-loss line at this deficit — the engine holds the honest rate instead of lying to you` : `the bigger this number, the faster — up to the muscle-loss line`;
   el('lv_cap').style.color = capped ? 'var(--warn)' : '';
   el('lv_confbar').style.width = conf+'%';
@@ -889,7 +932,7 @@ routes['train'] = { tab:true, render(host){
       <div class="row" style="gap:12px;">
         <img class="avsq" src="img/today.jpg" alt="your avatar, now">
         <div><h2 style="font-size:22px;">${plan.name}</h2>
-        <div class="mut small">your avatar trains with you · ${arrNow()} kg now</div></div>
+        <div class="mut small">your avatar trains with you · ${WTL(arrNow(),1)} now</div></div>
       </div>
       <span class="chip">${doneCount}/${totalSets} sets</span>
     </div>
@@ -901,6 +944,7 @@ routes['train'] = { tab:true, render(host){
       ${[['fba','Full Body'],['ul','Upper/Lower'],['ppl','Push/Pull/Legs']].map(([k,l])=>
         `<button class="${ (plan.prog||'fba')===k?'on':''}" onclick="swapProgram('${k}')">${l}</button>`).join('')}
     </div>
+    <button class="btn ghost" style="width:100%;margin-bottom:12px;" onclick="openPlanBreak()">Schedule + how injuries are worked around →</button>
     ${plan.moves.map((m,mi)=>`
       <div class="exrow" id="ex-${mi}">
         <div style="min-width:0;">
@@ -934,10 +978,10 @@ window.swapProgram=(k)=>{
 };
 function trainHint(m){
   const next=m.done.length;
-  if(next>=m.sets) return `${m.kg} kg × ${m.reps} · all sets logged`;
+  if(next>=m.sets) return `${WTL(m.kg,0)} × ${m.reps} · all sets logged`;
   let kg=m.kg;
   for(let i=0;i<m.rirs.length;i++) kg=ENG.nextLoad(kg,m.rirs[i]);
-  return `Set ${next+1}: ${kg} kg × ${m.reps}` + (m.rirs.length? ` · adapted from ${m.kg}`:'');
+  return `Set ${next+1}: ${WTL(kg,0)} × ${m.reps}` + (m.rirs.length? ` · adapted from ${WT(m.kg,0)}`:'');
 }
 window.setTap=(mi,si)=>{
   const m=store.data.plan.moves[mi];
@@ -1017,7 +1061,16 @@ routes['food'] = { tab:true, render(host){
         <div class="tiny dim mt">tap any meal to log it as-is — or scan your own plate</div>
         <div class="grid2 mt">${sample.map(([n,k,pp],i)=>`<button class="btn sub" onclick="quickAdd(${esc(JSON.stringify('Template: '+n))},${k},${pp},0,0)">+ ${n.split(' — ')[0]}</button>`).join('')}</div>
       </div>`:''}
-    <button class="btn" onclick="scanMeal()">📷 Scan a meal — AI estimate (demo)</button>
+    <div class="card flat">
+      <label class="lab2">TELL IT — WHAT YOU HAD</label>
+      <div class="row mt">
+        <input class="field grow" id="ff_desc" type="text" placeholder="voice or type — '3 eggs, rye toast, coffee with cream'" onkeydown="if(event.key==='Enter')logFreeFood()">
+        <button class="micb" title="say it" onclick="srFill('ff_desc')">🎙</button>
+      </div>
+      <button class="btn mt" onclick="logFreeFood()">Log what I said — engine estimates</button>
+      <div class="tiny dim mt">files as a labeled <b>est.</b> — the loop absorbs drift; tap any logged entry to correct the numbers</div>
+    </div>
+    <button class="btn mt" onclick="scanMeal()">📷 Scan a meal — AI estimate (demo)</button>
     <div class="grid2 mt">
       <button class="btn sub" onclick="quickAdd('Protein shake',320,50,8,5)">+ Shake · 50g P</button>
       <button class="btn sub" onclick="quickAdd('Chicken bowl',620,48,60,14)">+ Chicken bowl</button>
@@ -1025,9 +1078,9 @@ routes['food'] = { tab:true, render(host){
       <button class="btn sub" onclick="quickAdd('Snack-ish',250,8,28,12)">+ Snack</button>
     </div>
     ${items.length?`<div class="card flat"><div class="tiny dim mb">LOGGED TODAY</div>
-      ${items.map(x=>`<div class="row between small" style="padding:5px 0;">
-        <span>${x.name}${x.est?' <span class="dim">· est.</span>':''}</span>
-        <span class="num mut">${x.kcal} kcal · ${x.p}g P</span></div>`).join('')}</div>`:''}
+      ${items.map(x=>{ const gi=st.foods.indexOf(x); return `<div class="row between small" style="padding:5px 0;cursor:pointer;" onclick="editFood(${gi})">
+        <span style="min-width:0;">${x.name}${x.est?' <span class="dim">· est.</span>':''}</span>
+        <span class="num mut">${x.kcal} kcal · ${x.p}g P</span></div>`; }).join('')}</div>`:''}
     <div class="note">Photo scan returns a labeled <b>estimate</b> — the closed loop absorbs small errors, so honesty beats precision. Nothing uploads; the photo never leaves the phone.</div>`;
 }};
 window.setApproach=(k)=>{ store.data.profile.approach=k; store.save(); go('food'); };
@@ -1038,6 +1091,25 @@ window.scanMeal=()=>{
   toast('Photo read — estimate filed. Weigh-ins will correct any drift.');
 };
 window.quickAdd=(n,k,p,c,f)=>{ addFood(n,k,p,c,f,false); toast(k+' kcal · '+p+'g protein logged'); };
+window.logFreeFood=()=>{
+  const el=$('#ff_desc'); const txt=(el&&el.value||'').trim();
+  if(!txt){ toast('Type it or tap the mic first'); return; }
+  const t=txt.toLowerCase();
+  let k=450,p=30,c=35,f=16;
+  if(/salad|greens|veg|soup|fruit/.test(t)){k=300;p=16;c=26;f=10;}
+  if(/shake|bar|yogurt|cottage|skyr/.test(t)){k=320;p=46;c=16;f=6;}
+  if(/pizza|pasta|rice|bread|burrito|sandwich|fries|burger|taco|noodle/.test(t)){k=760;p=32;c=88;f=30;}
+  if(/chicken|beef|steak|salmon|fish|egg|tofu|turkey|pork/.test(t)){k=620;p=52;c=40;f=26;}
+  addFood('Said: '+txt,k,p,c,f,true);
+  toast('Estimate filed (est.) — correct the numbers on the entry anytime');
+};
+window.editFood=(gi)=>{
+  const f=store.data.foods[gi]; if(!f) return;
+  const nk=prompt('Correct \u201c'+f.name+'\u201d\nkcal:',f.kcal); if(nk===null) return;
+  const np=prompt('Protein (g):',f.p); if(np===null) return;
+  f.kcal=Math.round(parseFloat(nk))||f.kcal; f.p=Math.round(parseFloat(np))||f.p;
+  f.est=false; store.save(); go('food'); toast('Corrected — the loop takes the better numbers');
+};
 function addFood(name,kcal,p,c,fa,est){
   store.data.foods.push({d:new Date().toISOString().slice(0,10),name,kcal,p,c,fa,est});
   store.save(); go('food');
@@ -1075,8 +1147,8 @@ routes['checkin'] = { tab:true, render(host){
       ${arr.slip?`<div class="tiny" style="color:var(--warn);margin-top:8px;">${arr.slip} over-budget day${arr.slip>1?'s':''} in the last 14 — the window on Home drifted right accordingly.</div>`:''}
     </div>
     <div class="statrow">
-      <div class="stat"><div class="v num">${last.kg}</div><div class="k">Latest kg</div></div>
-      <div class="stat"><div class="v num ${wkRate>0?'volt':''}">${wkRate>0?'−':'+'}${Math.abs(wkRate).toFixed(2)}</div><div class="k">kg / week</div></div>
+      <div class="stat"><div class="v num">${WT(last.kg,1)}</div><div class="k">Latest ${unitsOf()}</div></div>
+      <div class="stat"><div class="v num ${wkRate>0?'volt':''}">${wkRate>0?'−':'+'}${rateVal(Math.abs(wkRate)).toFixed(1)}</div><div class="k">${unitsOf()} / week</div></div>
       <div class="stat"><div class="v num">−${target.toFixed(2)}</div><div class="k">Target rate</div></div>
     </div>
     ${waist?`<div class="tiny dim" style="margin:8px 4px;"><b style="color:var(--ink);">Last waist: ${waist.waist} cm</b> (${waist.d}) — tape beats nothing when you skip meals</div>`:''}
@@ -1098,9 +1170,9 @@ routes['checkin'] = { tab:true, render(host){
           `<button class="${((st.prefs.mfMode)||'coached')===k?'on':''}" onclick="setMfMode('${k}')">${l}</button>`).join('')}
       </div>
     </div>
-    <label class="lab">Log this morning's weight (kg)</label>
+    <label class="lab">Log this morning's weight (${unitsOf()})</label>
     <div class="row">
-      <input class="field grow" type="number" step="0.1" id="ci_kg" placeholder="${last.kg}">
+      <input class="field grow" type="number" step="0.1" id="ci_kg" placeholder="${dispKg(last.kg)}">
       <input class="field" type="number" step="0.5" id="ci_waist" placeholder="waist cm" style="width:110px;">
       <button class="btn" style="width:86px;" onclick="logWeight()">Log</button>
     </div>
@@ -1125,8 +1197,9 @@ function sparkSVG(w){
 window.logWeight=()=>{
   const v=parseFloat($('#ci_kg')?.value);
   const ws=parseFloat($('#ci_waist')?.value);
-  if(!v||v<40||v>250){ toast('That number looks off — try again'); return; }
-  const e={d:new Date().toISOString().slice(0,10),kg:v};
+  const kgV=unitsOf()==='lb' ? +(v/LBK).toFixed(2) : v;
+  if(!v||kgV<35||kgV>400){ toast('That number looks off — try again'); return; }
+  const e={d:new Date().toISOString().slice(0,10),kg:kgV};
   if(ws && ws>40 && ws<200) e.waist=ws;
   store.data.weights.push(e); store.save();
   toast('Logged. The window just re-aimed.');
@@ -1345,12 +1418,12 @@ function cannedAnswer(q){
   if(has('protein'))
     return `Because the goal isn't weight loss — it's <b>fat loss with muscle intact</b>. ${pro}g/day + lifting tells your body which tissue to burn. That's the muscle-preservation play, and it's why Home says HOLDING.`;
   if(has('goal','maintain','decade','band','after'))
-    return `The part nothing else builds: <b>maintenance, for the decade</b>. Your first three missions just get you to ${p.goalKg} kg — arriving is chapter 1. Phase 2 flips targets to your measured burn, the band (±3%) becomes the guardrail, drift gets caught at 3 days, and weeks-in-band becomes the metric you brag about in year 5.`;
+    return `The part nothing else builds: <b>maintenance, for the decade</b>. Your first three missions just get you to ${WTL(p.goalKg,1)} — arriving is chapter 1. Phase 2 flips targets to your measured burn, the band (±3%) becomes the guardrail, drift gets caught at 3 days, and weeks-in-band becomes the metric you brag about in year 5.`;
   if(has('window','date','timeline','push','late','miss','log'))
     return `Your window is <b>${arr.lo} → ${arr.hi}</b> (~${arr.weeks} weeks, ±4). It re-aims on almost every log: meals in-budget and sessions finished pull it left; over-budget days (${arr.slip} in the last 14) push it right. Miss a week entirely? The trend still finds you at the scale — the window just widens. Strict is free speed.`;
   if(has('lean','body fat','bf','measure','waist','tape'))
     return p.bf!=null
-      ? `You gave me ${p.bf}% — lean mass ≈ <b>${ENG.lbm(p)} kg</b>. Weight trend + waist tape keep the picture honest between scans; anything that keeps the trend true keeps the window true.`
+      ? `You gave me ${p.bf}% — lean mass ≈ <b>${WTL(ENG.lbm(p),0)}</b>. Weight trend + waist tape keep the picture honest between scans; anything that keeps the trend true keeps the window true.`
       : `No BF% on file — that's fine, the engine runs without it. If you get a number (DEXA, calipers, smart scale), add it in check-ins and the lean-mass math sharpens. Waist tape in check-ins is the cheap secondary signal.`;
   return `Here's what I can see right now: burn ≈ <b>${ENG.tdee(p).toLocaleString()}</b> kcal/day, protein floor <b>${pro}g</b>, arrival <b>${arr.lo} → ${arr.hi}</b> (${arr.slip?arr.slip+' over-budget day'+(arr.slip>1?'s':'')+' in the last 14':'clean 14 days'}), tracking in <b>${p.mode==='min'?'scale-first':'full-log'}</b> mode. Ask me about any of those — or tap a chip below.`;
 }
@@ -1369,12 +1442,12 @@ routes['you'] = { tab:true, render(host){
     <div class="hero scrub" id="yhero">
       <img src="img/today.jpg" id="yimg_now" alt="now figure">
       <img src="img/dream-body.jpg" id="yimg_dream" style="opacity:${tNow/100}" alt="projected figure">
-      <div class="projchip" id="yproj">NOW · ${arr.kgNow} kg</div>
+      <div class="projchip" id="yproj">NOW · ${WTL(arr.kgNow,1)}</div>
       <div class="stagepanel">
         <div class="scrubrow">
-          <button class="stop" id="ystop_then" onclick="yStop('then')"><span class="k">A · Then</span><span class="v">${p.kg}</span></button>
-          <button class="stop now sel" id="ystop_now" onclick="yStop('now')"><span class="k">B · Now</span><span class="v">${arr.kgNow}</span></button>
-          <button class="stop" id="ystop_dream" onclick="yStop('dream')"><span class="k">C · Dream</span><span class="v">${p.goalKg}</span></button>
+          <button class="stop" id="ystop_then" onclick="yStop('then')"><span class="k">A · Then</span><span class="v">${WT(p.kg,1)}</span></button>
+          <button class="stop now sel" id="ystop_now" onclick="yStop('now')"><span class="k">B · Now</span><span class="v">${WT(arr.kgNow,1)}</span></button>
+          <button class="stop" id="ystop_dream" onclick="yStop('dream')"><span class="k">C · Dream</span><span class="v">${WT(p.goalKg,1)}</span></button>
         </div>
         <input type="range" min="0" max="100" step="1" value="${Math.round(tNow)}" id="yscrub"
           oninput="yScrub(this.value)" style="--fill:${tNow}%">
@@ -1384,14 +1457,14 @@ routes['you'] = { tab:true, render(host){
     <div class="tiny dim" style="margin:0 4px;">scrub = projected you at that point of the timeline (stand-in figures; the real avatar morphs once it renders from your photos)</div>
     <div class="statrow mt">
       <div class="stat"><div class="v num">${maint?'0':arr.weeks}</div><div class="k">${maint?'Weeks in band':'Weeks to arrival (mid)'}</div></div>
-      <div class="stat"><div class="v num">${ENG.lbm(p)?ENG.lbm(p)+'<span class="dim" style="font-size:12px;"> kg LBM</span>':'—'}</div><div class="k">${p.bf!=null?'from your '+p.bf+'%':'add BF% to unlock'}</div></div>
+      <div class="stat"><div class="v num">${ENG.lbm(p)?WT(ENG.lbm(p),0)+'<span class="dim" style="font-size:12px;"> '+unitsOf()+' LBM</span>':'—'}</div><div class="k">${p.bf!=null?'from your '+p.bf+'%':'add BF% to unlock'}</div></div>
     </div>
     <div class="card mt">
       <div class="tiny dim" style="color:${maint?'var(--ok)':'var(--acc)'};">${maint?'PHASE 2 · LIVE':'MISSIONS 1–3 = THE BEGINNING'}</div>
       <div class="small mt" style="line-height:1.55;">
         ${maint
           ? `You made it. The real work starts now: <b>stay inside the band (±3%)</b>. Weeks-in-band is the decade's scoreboard, the drift alarm is your early-warning system, and maintenance billing auto-halves. This is the product.`
-          : `These first missions only get you <b>to ${p.goalKg} kg inside the band</b> — arriving is chapter 1, not the story. The real work is Phase 2: <b>staying there for the decade</b>, weeks-in-band as the scoreboard, drift caught at 3 days not +9 kg. That's what this app is for.`}
+          : `These first missions only get you <b>to ${WTL(p.goalKg,1)} inside the band</b> — arriving is chapter 1, not the story. The real work is Phase 2: <b>staying there for the decade</b>, weeks-in-band as the scoreboard, drift caught at 3 days not +9 kg. That's what this app is for.`}
       </div>
     </div>
     <div class="card">
@@ -1420,8 +1493,8 @@ window.yScrub=(tRaw)=>{
   const wks=rate>0?Math.round(rem/rate):0;
   const dt=new Date(); dt.setDate(dt.getDate()+wks*7);
   const name=t<=0?'DAY 0':t<33?'EARLY':t<67?'HALFWAY':t<99?'CLOSE':'GOAL';
-  if(chip) chip.textContent=`${name} · ${kg.toFixed(1)} kg · ~${wks} wks`;
-  if(lab) lab.textContent=t<=0?'origin — where this started':`projected: ${dt.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  if(chip) chip.textContent=`${name} · ${WT(kg,1)} ${unitsOf()} · ~${wks} wks`;
+  if(lab) lab.textContent=t<=0?'origin — where this started':`projected: ${dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
   ['then','now','dream'].forEach(s=>{
     const el=$('#ystop_'+s); if(el) el.classList.toggle('sel',(s==='then'&&t<=2)||(s==='now'&&t>2&&t<98)||(s==='dream'&&t>=98));
   });
@@ -1435,19 +1508,84 @@ window.yStop=(s)=>{
   if(s==='then'){
     if(sl){ sl.value=0; window.yScrub(0); }
     if(imgs) imgs.style.filter='saturate(.55) contrast(.92)';
-    const chip=$('#yproj'); if(chip) chip.textContent=`THEN · ${p.kg} kg · day 0`;
+    const chip=$('#yproj'); if(chip) chip.textContent=`THEN · ${WTL(p.kg,1)} · day 0`;
   } else if(s==='now'){
     if(sl){ sl.value=Math.round(tNow); window.yScrub(Math.round(tNow)); }
     if(imgs) imgs.style.filter='';
-    const chip=$('#yproj'); if(chip) chip.textContent=`NOW · ${arr.kgNow} kg`;
+    const chip=$('#yproj'); if(chip) chip.textContent=`NOW · ${WTL(arr.kgNow,1)}`;
   } else {
     if(sl){ sl.value=100; window.yScrub(100); }
     if(imgs) imgs.style.filter='';
-    const chip=$('#yproj'); if(chip) chip.textContent=`DREAM · ${p.goalKg} kg`;
+    const chip=$('#yproj'); if(chip) chip.textContent=`DREAM · ${WTL(p.goalKg,1)}`;
   }
 };
 window.driftDemo=()=>{ $('#driftmsg').innerHTML='<b style="color:var(--warn);">Demo ping:</b> "Scale\'s been 1.1% over band for 3 days. Not a crisis — a Tuesday fix: protein + a walk, re-check Friday."'; };
 window.wipeDemo=()=>{ if(confirm('Wipe demo data on this device?')){ store.clear(); QUIZ.step=0; location.hash=''; go('quiz'); } };
+
+/* ============ PLAN BREAKDOWN (schedule + injury accommodation) ============ */
+function weekSessions(prog,days){
+  const d=Math.max(2,Math.min(6,days));
+  if(prog==='ppl'){ const cyc=['ppl','ppull','ulB']; return Array.from({length:d},(_,i)=>cyc[i%3]); }
+  if(prog==='ul'){ const cyc=['ul','ulB']; return Array.from({length:d},(_,i)=>cyc[i%2]); }
+  return Array.from({length:d},()=>'fba');
+}
+window.openPlanBreak=()=>{ window.PB_BACK=(curRoute&&curRoute!=='planbreak')?curRoute:'home'; go('planbreak'); };
+routes['planbreak']= { tab:false, render(host){
+  const onboard=store.data&&store.data.onboarded;
+  const p=onboard?store.data.profile:QUIZ.a;
+  const plan=(onboard&&store.data.plan)||buildPlan({...p});
+  const arr=onboard?ENG.arrival(store.data):ENG.arrival({profile:p,weights:[],foods:[]});
+  const days=p.daysPerWeek||4;
+  const seq=weekSessions(plan.prog||'fba',days);
+  const injL=injSummary(p)||[];
+  const injParts=(p.injdetail||[]).map(x=>x.part).filter(Boolean);
+  const counts={}; seq.forEach(k=>counts[k]=(counts[k]||0)+1);
+  host.innerHTML=`
+    <h2 style="font-size:24px;margin-bottom:4px;">The plan — full breakdown</h2>
+    <div class="mut small mb">${days} sessions/week · built on what you told the quiz, not on wishes</div>
+    <div class="card flat" style="text-align:center;">
+      <div class="tiny dim">GOAL TARGET</div>
+      <div class="num" style="font-size:26px;margin:6px 0 2px;">${WTL(p.goalKg,1)}</div>
+      <div class="tiny dim">window ${arr.lo} → ${arr.hi} · ~${arr.weeks} weeks ±4</div>
+    </div>
+    <div class="card flat"><div class="tiny dim mb" style="margin-bottom:8px;">THE WEEKLY SCHEDULE</div>
+      ${seq.map((k,i)=>`<div class="row between small" style="padding:6px 0;">
+        <span><b style="color:var(--acc);">Day ${i+1}</b> · ${(PLANS[k]||PLANS.fba).name}</span>
+        <span class="num mut">${Object.values(counts)[0]>1&&counts[k]>1?'same session':''}</span></div>`).join('')}
+      <div class="tiny dim mt">which weekday each session lands on flexes with your life — the plan rides on the count</div>
+    </div>
+    ${[['fba',seq.filter(k=>k==='fba').length],['ul',seq.filter(k=>k==='ul').length],['ulB',seq.filter(k=>k==='ulB').length],['ppl',seq.filter(k=>k==='ppl').length],['ppull',seq.filter(k=>k==='ppull').length]]
+      .filter(([k,n])=>n>0).map(([k,n])=>{ const src=PLANS[k];
+      return `<div class="card flat"><div class="tiny dim mb" style="margin-bottom:6px;">${src.name.toUpperCase()} <span class="dim">· ${n} session${n>1?'s':''}/wk</span></div>
+        ${src.moves.map(m=>{ const injd=m[4]&&injParts.includes(m[4]);
+        return `<div class="row between small" style="padding:5px 0;border-bottom:1px solid var(--line);">
+          <span style="min-width:0;">${m[0]}${injd?` <span class="tiny" style="color:var(--warn);">→ swapped: ${m[5]}</span>`:''}</span>
+          <span class="num mut">4×${m[2]}</span></div>`; }).join('')}
+      </div>`; }).join('')}
+    ${injL.length?`<div class="card flat"><div class="tiny dim">HOW YOUR INJURIES ARE WORKED AROUND</div>
+      ${injL.map(x=>`<div class="small mt" style="padding-left:4px;">• ${x.label}${x.notes?`<div class="mut small" style="margin-left:10px;margin-top:2px;">"${x.notes}"</div>`:''}</div>`).join('')}
+      <div class="tiny dim mt">any lift that irritates one of these swaps to the alternative above — light-status parts start ~30% under and earn load back; the engine re-checks it every check-in</div></div>`
+     :'<div class="note">No pain history on file — everything trains full. If something starts hurting: check-in, tell the coach, the plan rebuilds around it.</div>'}
+    <div class="btnrow"><button class="btn ghost" style="width:100%;" onclick="go('${window.PB_BACK||'home'}')">← Back</button></div>`;
+}};
+
+/* ============ SPLASH / LANDING ============ */
+const FF_TORSO=`<rect width="200" height="200" fill="#0A0B0D"/><circle cx="100" cy="40" r="21" fill="var(--acc)"/><path d="M60 82 Q60 68 74 68 L126 68 Q140 68 140 82 L135 152 Q134 162 124 162 L76 162 Q66 162 65 152 Z" fill="var(--acc)"/><rect x="58" y="98" width="84" height="7" fill="#0A0B0D"/><rect x="58" y="126" width="84" height="7" fill="#0A0B0D"/><g stroke="var(--acc)" stroke-width="3.5" stroke-linecap="round"><line x1="72" y1="94" x2="72" y2="109"/><line x1="88" y1="94" x2="88" y2="109"/><line x1="104" y1="94" x2="104" y2="109"/><line x1="120" y1="94" x2="120" y2="109"/><line x1="72" y1="122" x2="72" y2="137"/><line x1="88" y1="122" x2="88" y2="137"/><line x1="104" y1="122" x2="104" y2="137"/><line x1="120" y1="122" x2="120" y2="137"/></g>`;
+routes['splash']= { tab:false, render(host){
+  const onboard=store.data&&store.data.onboarded;
+  host.innerHTML=`<div class="splash">
+    <svg class="ffmark" viewBox="0 0 200 200">${FF_TORSO}</svg>
+    <div class="ffword">FRANKENFIT</div>
+    <div class="fftag">Assemble the future you. Honest math, a decade of maintenance, zero hype.</div>
+    ${onboard?'<div class="tiny dim">opening your plan…</div>'
+      :`<div style="display:flex;flex-direction:column;gap:10px;width:min(320px,86%);margin-top:10px;">
+        <button class="btn" onclick="startFromSplash()">Start — 2 minutes</button>
+        <button class="btn ghost" onclick="seedDemo()">Skip ahead: load a demo account</button>
+      </div>`}
+  </div>`;
+  if(onboard) setTimeout(()=>{ if(curRoute==='splash') go('home'); },1400);
+}};
+window.startFromSplash=()=>{ QUIZ.step=0; go('quiz'); };
 
 /* ============ boot ============ */
 store.load();
@@ -1473,7 +1611,7 @@ window.seedDemo=()=>{
 };
 if(params.get('demo')==='1' && !(store.data && store.data.onboarded)) seedDemo();
 const startRoute=(location.hash||'').replace('#/','');
-go(store.data && store.data.onboarded ? (routes[startRoute]?startRoute:'home') : 'quiz');
+go(store.data && store.data.onboarded ? (routes[startRoute]?startRoute:'home') : (startRoute==='quiz' ? 'quiz' : 'splash'));
 window.addEventListener('hashchange',()=>{ const r=(location.hash||'').replace('#/',''); if(r!==curRoute) go(r); });
 </script>
 </body>
